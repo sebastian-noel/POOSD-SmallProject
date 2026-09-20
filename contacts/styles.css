@@ -1,0 +1,247 @@
+/*code inherited from login page, comments made to a row highlights the changes made that may require updating to login page*/
+
+/*global css color variables*/
+:root {
+  --bg: #f4f5f7;
+  --card-bg: #ffffff;
+  --border: #d9dce1;
+  --text: #1f2328;
+  --muted: #656d76;
+  --primary: #FF6EAD; /*primary color changed from blue to pink cause its cuter lol*/
+  --primary-strong: #FF358C; /*darker pink*/
+  --success: #15803d;
+  --error: #b91c1c;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16181d;
+    --card-bg: #1e2128;
+    --border: #333844;
+    --text: #e6e8eb;
+    --muted: #9aa2ad;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  font-family: Arial, Helvetica, sans-serif; /*font change*/
+}
+
+body {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.page-shell {
+  width: min(100%, 1200px);
+  display: grid;
+  place-items: center;
+  padding: 32px 20px;
+}
+
+/*main page*/
+.contacts-panel {
+  width: min(100%, 900px);
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 24px 28px;
+}
+
+/*headings,subtitles,wraps (main)*/
+h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.subtitle {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+label {
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+/*table*/
+
+/*search bar */
+.toolbar {
+  display: flex;
+  gap:12px;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:24px;
+}
+
+/*takeup horizontal space*/
+.search-box {
+  flex:1;
+}
+
+/*main table layout*/
+.contacts-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.contacts-table th, /*table header, data padding*/
+.contacts-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.contacts-table th {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.contacts-table td {
+  font-size: 0.92rem;
+  color: var(--text);
+}
+
+/* dark semi-transparent backdrop covering the screen */
+/*edit/adding contact info*/
+.popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: grid;
+  place-items: center;
+  z-index: 100;
+}
+
+/* popup box containing the form */
+.popup-content {
+  width: min(100%, 420px);
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 24px;
+}
+
+input {
+  appearance: none;
+  width: 100%;
+  padding: 11px 13px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text);
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+input::placeholder {
+  color: var(--muted);
+  opacity: 0.8;
+}
+
+input:focus {
+  border-color: var(--primary);
+}
+
+/*save/add content button*/
+.primary-btn {
+  width: 100%;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 18px;
+  background: var(--primary);
+  color: white;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.primary-btn:hover {
+  background: var(--primary-strong);
+}
+
+.primary-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/*table actions (edit/cancel)*/
+.secondary-btn {
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.secondary-btn:hover {
+  background: var(--border);
+}
+
+/*delete button*/
+.btn-delete {
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  border-radius: 4px;
+  border: 1px solid var(--error);
+  background: transparent;
+  color: var(--error);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.btn-delete:hover {
+  background: var(--error);
+  color: #ffffff;
+}
+
+/*feedback message*/
+.form-message {
+  min-height: 20px;
+  margin-top: 14px;
+  font-size: 0.87rem;
+  color: var(--muted);
+}
+
+.form-message.success {
+  color: var(--success);
+}
+
+.form-message.error {
+  color: var(--error);
+}
+
+/*mobile screen*/
+@media (max-width: 480px) {
+  .contacts-panel {
+    padding: 24px 20px;
+    border-radius: 8px;
+  }
+}
