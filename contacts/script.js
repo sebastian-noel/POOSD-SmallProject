@@ -1,45 +1,74 @@
-const API_URL = window.APP_CONFIG?.API_URL ||'http://localhost:5000/api/auth/login';
-function searchContact()
-{
-	let srch = document.getElementById("searchText").value;
-	document.getElementById("colorSearchResult").innerHTML = "";
-	
-	let colorList = "";
+const API_URL = window.APP_CONFIG?.API_URL || 'http://localhost:5000/api/auth/login';
 
-	let tmp = {search:srch,userId:userId};
-	let jsonPayload = JSON.stringify( tmp );
+const form = document.getElementById('contactForm');
+const submitButton = document.getElementById('submitButton');
+const buttonText = submitButton.querySelector('.btn-text');
+const messageBox = document.getElementById('formMessage');
 
-	let url = urlBase + '/SearchColors.' + extension;
-	
-	let xhr = new XMLHttpRequest();
-	xhr.open("POST", url, true);
-	xhr.setRequestHeader("Content-type", "application/json; charset=UTF-8");
-	try
-	{
-		xhr.onreadystatechange = function() 
-		{
-			if (this.readyState == 4 && this.status == 200) 
-			{
-				document.getElementById("colorSearchResult").innerHTML = "Color(s) has been retrieved";
-				let jsonObject = JSON.parse( xhr.responseText );
-				
-				for( let i=0; i<jsonObject.results.length; i++ )
-				{
-					colorList += jsonObject.results[i];
-					if( i < jsonObject.results.length - 1 )
-					{
-						colorList += "<br />\r\n";
-					}
-				}
-				
-				document.getElementsByTagName("p")[0].innerHTML = colorList;
-			}
-		};
-		xhr.send(jsonPayload);
-	}
-	catch(err)
-	{
-		document.getElementById("colorSearchResult").innerHTML = err.message;
-	}
-	
+function setMessage(text, type = '') {
+  messageBox.textContent = text;
+  messageBox.className = 'form-message';
+
+  if (type) {
+    messageBox.classList.add(type);
+  }
 }
+
+function setLoading(isLoading) {
+  submitButton.disabled = isLoading;
+  buttonText.textContent = isLoading ? 'Signing in...' : 'Sign in';
+}
+
+async function loginUser(payload) {
+  const response = await fetch(API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Login failed. Please try again.');
+  }
+
+  return data;
+}
+
+form.addEventListener('submit', async (event) => {
+  event.preventDefault();
+
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const rememberMe = document.getElementById('rememberMe').checked;
+
+  if (!email || !password) {
+    setMessage('Please enter both your email and password.', 'error');
+    return;
+  }
+
+  setLoading(true);
+  setMessage('');
+
+  try {
+    const result = await loginUser({ email, password, rememberMe });
+    setMessage(result.message || 'Login successful. Redirecting...', 'success');
+
+    if (result.token) {
+      localStorage.setItem('authToken', result.token);
+    }
+
+    window.setTimeout(() => {
+      // Replace this with your app route when backend is connected.
+      console.log('Authenticated user:', result);
+    }, 600);
+  } catch (error) {
+    setMessage(error.message || 'Something went wrong. Please try again.', 'error');
+  } finally {
+    setLoading(false);
+  }
+});
