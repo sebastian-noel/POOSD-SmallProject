@@ -1,100 +1,43 @@
-\# Contacts
+# Contacts
 
 WIP: This file is currently unfinished.
 
+## Files
 
+- `contacts.html` — page structure
+- `styles.css` — styling and layout
+- `script.js` — form logic and API integration
 
-\## Files
+## API Integration
 
+Update the `API_URL` in `script.js` to match your backend endpoint:
 
-
-\- `contacts.html` — page structure
-
-\- `styles.css` — styling and layout
-
-\- `script.js` — form logic and API integration
-
-
-
-\## API integration
-
-
-
-Update the `API\_URL` in `script.js` to match your backend endpoint:
-
-
-
-```js
-
-const API\_URL = 'http://localhost:5000/api/auth/login';
-
+```javascript
+const API_URL = 'http://localhost:5000/api/contacts';
 ```
 
-
-
-Expected request body:
-
-
-
+### Expected Request Body
 ```json
-
 {
-
-&#x20; 
-
-
-
+  "userId": 1,
+  "search": ""
 }
-
 ```
 
-
-
-Expected successful response shape:
-
-
-
+### Expected Successful Response Shape
 ```json
-
 {
-
-&#x20;
-
-
-
+  "results": [],
+  "error": ""
 }
-
 ```
 
-
-
-\## Run locally
-
-
+## Run Locally
 
 From this folder, start a simple web server:
 
-
-
 ```bash
-
 python -m http.server 8000
-
 ```
 
-
-
-Then open:
-
-
-
-```text
-
-http://localhost:8000
-
-```
-
-
-
-This page is intentionally flexible so you can swap in a real backend endpoint without changing the UI structure
-
+Then open: http://localhost:8000
