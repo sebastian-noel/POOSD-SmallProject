@@ -4,12 +4,12 @@ CREATE TABLE IF NOT EXISTS Users (
     username VARCHAR(50),
     password_hash VARCHAR(200)
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
- 
-)
+);
 
 CREATE TABLE IF NOT EXISTS Contacts (
 
-    id INT PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    userId INT,
     FOREIGN KEY (userId) REFERENCES Users(userId),
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
@@ -17,4 +17,4 @@ CREATE TABLE IF NOT EXISTS Contacts (
     phone VARCHAR(20) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)
+);
