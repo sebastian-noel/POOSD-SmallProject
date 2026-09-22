@@ -1,0 +1,161 @@
+openapi: 3.0.3
+info:
+  title: Personal Contact Manager API
+  description: >
+    REST API for a per-user contact manager. All contacts endpoints require
+    an active login session (cookie set by POST /login.php). This spec
+    demonstrates the two endpoints presented live: contact search
+    (GET /contacts.php) and contact creation (POST /contacts.php).
+  version: "1.0.0"
+servers:
+  - url: https://YOUR-DOMAIN-HERE.com/api
+    description: Production (replace with your actual domain — no IP addresses)
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: PHPSESSID
+  schemas:
+    Contact:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 12
+        user_id:
+          type: integer
+          example: 3
+        first_name:
+          type: string
+          example: Ada
+        last_name:
+          type: string
+          example: Lovelace
+        phone:
+          type: string
+          example: "407-555-0134"
+        email:
+          type: string
+          example: ada@example.com
+        address:
+          type: string
+          example: "123 Analytical Engine Way"
+        notes:
+          type: string
+          example: "Met at the UCF career fair"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    NewContact:
+      type: object
+      required: [first_name, last_name]
+      properties:
+        first_name:
+          type: string
+          example: Ada
+        last_name:
+          type: string
+          example: Lovelace
+        phone:
+          type: string
+          example: "407-555-0134"
+        email:
+          type: string
+          example: ada@example.com
+        address:
+          type: string
+          example: "123 Analytical Engine Way"
+        notes:
+          type: string
+          example: "Met at the UCF career fair"
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Not logged in
+
+security:
+  - cookieAuth: []
+
+paths:
+  /contacts.php:
+    get:
+      summary: List or search the current user's contacts
+      description: >
+        With no query parameters, returns every contact belonging to the
+        logged-in user. With `search`, performs a server-side, partial
+        (substring) match against first name, last name, email, and phone —
+        the client never caches the full contact list locally.
+      parameters:
+        - name: search
+          in: query
+          required: false
+          description: Partial-match search term (matched with SQL LIKE '%term%').
+          schema:
+            type: string
+          example: love
+        - name: id
+          in: query
+          required: false
+          description: Return a single contact by id instead of a list.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: A list (or single object) of matching contacts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  contacts:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Contact"
+        "401":
+          description: Not logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    post:
+      summary: Create a new contact for the current user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewContact"
+      responses:
+        "201":
+          description: Contact created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Contact created
+                  id:
+                    type: integer
+                    example: 12
+        "400":
+          description: Missing or invalid fields
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Not logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
