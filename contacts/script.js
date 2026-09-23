@@ -144,6 +144,8 @@ document.addEventListener("DOMContentLoaded", function ()
 			searchContact();
 		}
 	});
+	let logoutBtn = document.getElementById("logoutBtn");
+	logoutBtn.addEventListener("click", doLogout);
  
 	createContacts();
 });
