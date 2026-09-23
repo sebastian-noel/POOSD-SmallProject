@@ -1,74 +1,149 @@
-const API_URL = window.APP_CONFIG?.API_URL || 'http://localhost:5000/api/auth/login';
+const API_URL = window.APP_CONFIG?.API_URL || 'http://localhost:5000/api/contacts';
+//most code adopted from COLORS lab, pls dont kill me :(
 
-const form = document.getElementById('contactForm');
-const submitButton = document.getElementById('submitButton');
-const buttonText = submitButton.querySelector('.btn-text');
-const messageBox = document.getElementById('formMessage');
-
-function setMessage(text, type = '') {
-  messageBox.textContent = text;
-  messageBox.className = 'form-message';
-
-  if (type) {
-    messageBox.classList.add(type);
-  }
+let userName = "";
+let firstName = "";
+let lastName = "";
+function doLogout()
+{
+	userName = "";
+	firstName = "";
+	lastName = "";
+	document.cookie = "firstName=; expires = Thu, 01 Jan 1970 00:00:00 GMT";
+	document.cookie = "lastName=; expires = Thu, 01 Jan 1970 00:00:00 GMT";
+	document.cookie = "userName=; expires = Thu, 01 Jan 1970 00:00:00 GMT";
+	window.location.href = "index.html";
 }
 
-function setLoading(isLoading) {
-  submitButton.disabled = isLoading;
-  buttonText.textContent = isLoading ? 'Signing in...' : 'Sign in';
+function addContact()
+{
+	let tmp = {firstName:document.getElementById("firstName").value, lastName:document.getElementById("lastName").value, phone:document.getElementById("contactPhone").value, email:document.getElementById("contactEmail").value, address:document.getElementById("contactAddress").value, notes:document.getElementById("notes").value, dateCreated:document.getElementById("dateCreated").value};
+	let jsonPayload = JSON.stringify( tmp );
+	let url = API_URL;
+	
+	let xhr = new XMLHttpRequest();
+	xhr.open("POST", url, true);
+	xhr.setRequestHeader("Content-type", "application/json; charset=UTF-8");
+	try
+	{
+		xhr.onreadystatechange = function() 
+		{
+			if (this.readyState == 4 && (this.status == 200 ||this.status == 201)) //changed to also include 201
+			{
+				document.getElementById("contactAddResult").innerHTML = "Contact has been added";
+				document.getElementById("contactAddResult").className = "contact-message success"; //color
+			} else if (this.readyState == 4) // added to catch error on php to be able to notify user when contact cannot be added
+			{
+				let jsonObject = JSON.parse(xhr.responseText);
+				document.getElementById("contactAddResult").innerHTML = jsonObject.message || "Error adding contact";
+				document.getElementById("contactAddResult").className = "contact-message error"; //color
+			}
+		};
+		xhr.send(jsonPayload);
+	}
+	catch(err)
+	{
+		document.getElementById("contactAddResult").innerHTML = err.message;
+		document.getElementById("contactAddResult").className = "contact-message error"; //cp;pr
+	}
+	
 }
 
-async function loginUser(payload) {
-  const response = await fetch(API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-    },
-    credentials: 'include',
-    body: JSON.stringify(payload),
-  });
 
-  const data = await response.json().catch(() => ({}));
+function searchContact()
+{
+	let srch = document.getElementById("searchBox").value;
+	document.getElementById("contactSearchResult").innerHTML = "";
 
-  if (!response.ok) {
-    throw new Error(data.message || 'Login failed. Please try again.');
-  }
+	let url = API_URL + '?search=' + encodeURIComponent(srch);
 
-  return data;
+	let xhr = new XMLHttpRequest();
+	xhr.open("GET", url, true);
+
+	try
+	{
+		xhr.onreadystatechange = function() 
+		{
+			if (this.readyState == 4 && this.status == 200) 
+			{
+				document.getElementById("contactSearchResult").innerHTML = "Contacts(s) has been retrieved";
+				let jsonObject = JSON.parse(xhr.responseText);
+				loadContacts(jsonObject.contacts);
+			}
+		};
+		xhr.send();
+	}
+	catch(err)
+	{
+		document.getElementById("contactSearchResult").innerHTML = err.message;
+	}
+	
 }
 
-form.addEventListener('submit', async (event) => {
-  event.preventDefault();
+function createContacts()
+{
+	let xhr = new XMLHttpRequest();
+	xhr.open("GET", API_URL,true);
+	xhr.onreadystatechange = function()
+	{
+		if (this.readyState==4&&this.status==200)
+		{
+			let jsonObject = JSON.parse(xhr.responseText);
+			loadContacts(jsonObject.contacts);
+		}
+	}
+}
 
-  const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value;
-  const rememberMe = document.getElementById('rememberMe').checked;
+function loadContacts(contacts)
+{
+	let body = document.getElementById("contactsTableBody");
+	body.innerHTML="";
 
-  if (!email || !password) {
-    setMessage('Please enter both your email and password.', 'error');
-    return;
-  }
+	if (!contacts||contacts.length===0)
+	{
+		body.innerHTML ="<tr><td colspan=\"5\">No contacts found</td></tr>";
+		return;
+	}
+	contacts.forEach(function(contact)
+	{
+	let r = document.createElement("tr");
+	r.innerHTML = "<td>" + contact.firstName + " " + contact.lastName + "</td>" + "<td>" + contact.email + "</td>" + "<td>" + contact.phone + "</td>" + "<td>" + (contact.dateCreated || "") + "</td>" +"<td>" + "<button class=\"secondary-btn\" type=\"button\">Edit</button> " +"<button class=\"btn-delete\" type=\"button\">Delete</button>" + "</td>";
+	body.appendChild(r);
+	});
+}
 
-  setLoading(true);
-  setMessage('');
-
-  try {
-    const result = await loginUser({ email, password, rememberMe });
-    setMessage(result.message || 'Login successful. Redirecting...', 'success');
-
-    if (result.token) {
-      localStorage.setItem('authToken', result.token);
-    }
-
-    window.setTimeout(() => {
-      // Replace this with your app route when backend is connected.
-      console.log('Authenticated user:', result);
-    }, 600);
-  } catch (error) {
-    setMessage(error.message || 'Something went wrong. Please try again.', 'error');
-  } finally {
-    setLoading(false);
-  }
+document.addEventListener("DOMContentLoaded", function ()
+{
+	let overlay = document.getElementById("popupOverlay");
+	let addBtn = document.getElementById("addContactBtn");
+	let closeBtn = document.getElementById("closePopupBtn");
+	let form = document.getElementById("contactForm");
+	let searchBox = document.getElementById("searchBox");
+	addBtn.addEventListener("click", function()
+	{
+		overlay.style.display = "grid";
+	});
+ 
+	closeBtn.addEventListener("click", function()
+	{
+		overlay.style.display = "none";
+	});
+ 
+	form.addEventListener("submit", function(event)
+	{
+		event.preventDefault();
+		addContact();
+		overlay.style.display = "none";
+		form.reset();
+	});
+ 
+	searchBox.addEventListener("keydown", function(event)
+	{
+		if (event.key ==="Enter")
+		{
+			searchContact();
+		}
+	});
+ 
+	createContacts();
 });

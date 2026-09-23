@@ -2,93 +2,104 @@
 <html lang="en">
 
 
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>Contact Manager Dashboard</title>
-    <link rel="stylesheet" href="styles.css" />
+		<title>Contact Manager Dashboard</title>
+		<link rel="stylesheet" href="styles.css" />
 
-  </head>
-  <body>
-    <!--main content-->
-    <main class="page-shell">
-      <!--card-->
-      <section class="contacts-panel" aria-label="Contacts Panel">
-        <h1>Contact Manager</h1>
-        <p class="subtitle">Manage and search your contacts</p>
-        <!--search/add-->
-        <div class="toolbar">
-            <input id="searchBox"
-              class="search-box"
-              type="search"
-              placeholder="Search contacts..."
-              aria-label="Search Contacts"
-            />
-            <button id="addContactBtn" class="primary-btn" style="width: auto;">
-              Add Contact
-            </button>
-          </div>
-          <!--table-->
-          <table class="contacts-table">
-            <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Date Created</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="contactsTableBody">
-          </tbody>
-        </table>
-      </section>
-    </main>
+	</head>
+	<body>
+		<!--main content-->
+		<main class="page-shell">
+			<!--card-->
+			<section class="contacts-panel" aria-label="Contacts Panel">
+				<h1>Contact Manager</h1>
+				<p class="subtitle">Manage and search your contacts</p>
+				<!--search/add-->
+				<div class="toolbar">
+					<input id="searchBox"
+						class="search-text"
+						type="search"
+						placeholder="Search contacts..."
+						aria-label="Search Contacts"
+					/>
+					<button id="addContactBtn" class="primary-btn" style="width: auto;">
+						Add Contact
+					</button>
+				</div>
+				<div id="contactSearchResult" class="contact-message" role="status" aria-live="polite"></div>
+				<!--table-->
+				<table class="contacts-table">
+					<thead>
+					<tr>
+						<th>Name</th>
+						<th>Email</th>
+						<th>Phone</th>
+						<th>Date Created</th>
+						<th>Actions</th>
+					</tr>
+					</thead>
+					<tbody id="contactsTableBody">
+					</tbody>
+				</table>
+			</section>
+		</main>
 
-<div id="popupOverlay" class="popup-overlay" style="display: none;">
-      <div class="popup-content">
-        <h2>Add Contact</h2>
-        <form id="contactForm" novalidate>
-          <div class="field-group">
-            <label for="firstName">First Name</label>
-            <input id="firstName" name="firstName" type="text" placeholder="First Name" required />
-          </div>
+		<div id="popupOverlay" class="popup-overlay" style="display: none;">
+			<div class="popup-content">
+				<h2>Add Contact</h2>
+				<form id="contactForm" novalidate>
+					<div class="field-group">
+						<label for="firstName">First Name</label>
+						<input id="firstName" name="firstName" type="text" placeholder="First Name" required />
+					</div>
 
-          <div class="field-group">
-            <label for="lastName">Last Name</label>
-            <input id="lastName" name="lastName" type="text" placeholder="Last Name" required />
-          </div>
+					<div class="field-group">
+						<label for="lastName">Last Name</label>
+						<input id="lastName" name="lastName" type="text" placeholder="Last Name" required />
+					</div>
 
-          <div class="field-group">
-            <label for="contactEmail">Email</label>
-            <input id="contactEmail" name="email" type="email" placeholder="Email Address" required />
-          </div>
+					<div class="field-group">
+						<label for="contactEmail">Email</label>
+						<input id="contactEmail" name="email" type="email" placeholder="Email Address" required />
+					</div>
 
-          <div class="field-group">
-            <label for="contactPhone">Phone</label>
-            <input id="contactPhone" name="phone" type="tel" placeholder="Phone Number" required />
+					<div class="field-group">
+						<label for="contactPhone">Phone</label>
+						<input id="contactPhone" name="phone" type="tel" placeholder="Phone Number" required />
+					</div>
 
-          </div>
-          <div class="field-group">
-            <label for="dateCreated">Date Created</label>
-            <input id="dateCreated" name="dateCreated" type="date" required />
-          </div>
+					<div class="field-group">
+						<label for="contactAddress">Address</label>
+						<input id="contactAddress" name="address" type="text" placeholder="Address" />
+					</div>
 
-          <div style="display: flex; gap: 10px; margin-top: 20px;">
-            <button type="button" id="closePopupBtn" class="secondary-btn" style="flex: 1;">
-              Cancel
-            </button>
-            <button type="submit" class="primary-btn" style="flex: 1;">
-              Save Contact
-            </button>
-          </div>
+					<div class="field-group">
+						<label for="notes">Notes</label>
+						<input id="notes" name="notes" type="text" placeholder="Notes" />
+					</div>
 
-          <div id="formMessage" class="form-message" role="alert" aria-live="polite"></div>
-        </form>
-      </div>
-    </div>
+					<div class="field-group">
+						<label for="dateCreated">Date Created</label>
+						<input id="dateCreated" name="dateCreated" type="date" required />
+					</div>
 
-    <script src="script.js"></script>
-  </body>
+					<div style="display: flex; gap: 10px; margin-top: 20px;">
+						<button type="button" id="closePopupBtn" class="secondary-btn" style="flex: 1;">
+							Cancel
+						</button>
+						<button type="submit" class="primary-btn" style="flex: 1;">
+							Save Contact
+						</button>
+					</div>
+
+					<div id="contactAddResult" class="contact-message" role="alert" aria-live="polite"></div>
+				</form>
+			</div>
+		</div>
+
+		<script src="script.js"></script>
+	</body>
 </html>

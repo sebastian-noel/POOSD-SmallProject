@@ -95,7 +95,7 @@ label {
 }
 
 /*takeup horizontal space*/
-.search-box {
+.search-text {
   flex:1;
 }
 
@@ -135,7 +135,7 @@ label {
   z-index: 100;
 }
 
-/* popup box containing the form */
+/* popup box containing the add contact form */
 .popup-content {
   width: min(100%, 420px);
   background: var(--card-bg);
@@ -223,18 +223,18 @@ input:focus {
 }
 
 /*feedback message*/
-.form-message {
+.contact-message {
   min-height: 20px;
   margin-top: 14px;
   font-size: 0.87rem;
   color: var(--muted);
 }
 
-.form-message.success {
+.contact-message.success {
   color: var(--success);
 }
 
-.form-message.error {
+.contact-message.error {
   color: var(--error);
 }
 
