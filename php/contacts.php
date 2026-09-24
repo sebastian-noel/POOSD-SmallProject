@@ -48,8 +48,7 @@ function handle_get(PDO $db, int $userId): void {
         json_response(200, ['contact' => $contact]);
     }
 
-    // Server-side search with partial matching (required: no client-side
-    // caching of all contacts -- every search re-queries the database).
+    // Server-side search with partial matching 
     if (isset($_GET['search']) && trim($_GET['search']) !== '') {
         $term = trim($_GET['search']);
         // Escape LIKE wildcard characters the user might type literally.
@@ -91,11 +90,16 @@ function handle_create(PDO $db, int $userId): void {
         json_response(400, ['message' => 'Invalid email address']);
     }
 
+    // Record today's date/time as the creation date -- set explicitly here
+    // in PHP so a contact 
+    // created today stores today's date, e.g. 2026-09-23 14:02:10.
+    $createdAt = date('Y-m-d H:i:s');
+
     $stmt = $db->prepare(
-        'INSERT INTO contacts (user_id, first_name, last_name, phone, email, address, notes)
-         VALUES (?, ?, ?, ?, ?, ?, ?)'
+        'INSERT INTO contacts (user_id, first_name, last_name, phone, email, address, notes, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
     );
-    $stmt->execute([$userId, $firstName, $lastName, $phone, $email, $address, $notes]);
+    $stmt->execute([$userId, $firstName, $lastName, $phone, $email, $address, $notes, $createdAt]);
 
     $id = (int) $db->lastInsertId();
     $stmt = $db->prepare('SELECT * FROM contacts WHERE id = ?');
