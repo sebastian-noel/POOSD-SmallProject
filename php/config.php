@@ -1,6 +1,5 @@
 <?php
 // Database connection, configured from the repo's .env file
-// (see .env.example at the project root). Never commit a real .env.
 
 function load_env(): void {
     $path = dirname(__DIR__) . '/.env';
