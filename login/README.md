@@ -8,10 +8,10 @@
 
 ## API integration
 
-Update the `API_URL` in `script.js` to match your backend endpoint:
+The default URL reaches PHP on the same origin:
 
 ```js
-const API_URL = 'http://localhost:5000/api/auth/login';
+const API_URL = window.APP_CONFIG?.API_URL || '../php/auth/login.php';
 ```
 
 Expected request body:
@@ -29,22 +29,17 @@ Expected successful response shape:
 ```json
 {
   "message": "Login successful",
-  "token": "jwt-or-session-token"
+  "user": { "id": 1, "username": "Huey", "email": "huey@example.com" }
 }
 ```
 
-## Run locally
+Authentication uses the HttpOnly PHP session cookie; there is no token to save in
+localStorage. On success the browser opens `../contacts/contacts.html`. The
+dashboard verifies the session before loading contacts. Logout calls PHP and
+expires the session cookie before returning here.
 
-From this folder, start a simple web server:
-
-```bash
-python -m http.server 8000
-```
-
-Then open:
-
-```text
-http://localhost:8000
-```
-
-This page is intentionally flexible so you can swap in a real backend endpoint without changing the UI structure.
+Serve the repository root through Apache with PHP and the configured MySQL
+database. The root `index.php` redirects to this login page. Use HTTPS on the
+deployed domain because the session cookie is Secure. A static file server alone
+cannot execute the API. If a deployment overrides `APP_CONFIG.API_URL`, define it
+before loading `script.js` and configure the other pages consistently.

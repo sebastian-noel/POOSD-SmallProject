@@ -12,8 +12,16 @@ Add, search, edit, list, delete contacts
 You may update the `API_URL` in `script.js` to match your backend endpoint:
 
 ```javascript
-const API_URL = window.APP_CONFIG?.API_URL || 'http://localhost:5000/api/contacts';
+const API_URL = window.APP_CONFIG?.API_URL || '../php/contacts.php';
+const AUTH_BASE_URL = window.APP_CONFIG?.AUTH_BASE_URL || '../php/auth';
 ```
+
+The dashboard calls `GET {AUTH_BASE_URL}/me.php` before displaying contacts and
+when restored from the browser's Back/Forward cache. A 401 returns the user to
+login. A failed session check keeps the dashboard hidden with a retry message.
+Logout calls `POST {AUTH_BASE_URL}/logout.php`; a failed logout keeps the user on
+the dashboard and displays an error. The deployed frontend and API share one
+HTTPS origin and authenticate with the HttpOnly PHP session cookie.
 ## Endpoints
 Every request is accessed through the user's server-side. One user cannot alter another users contact page.
 
@@ -69,12 +77,8 @@ Anything that goes wrong (400 / 404 / 405):
 { "message": "..." }
 ​```
 
-## Run Locally
+## Running the application
 
-From this folder, start a simple web server:
-
-```bash
-python -m http.server 8000
-```
-
-Then open: http://localhost:8000
+Serve the repository root through Apache/PHP with the configured database. Open
+the domain root to log in or register. A static file server alone cannot execute
+the API; use HTTPS on the deployed domain for the Secure session cookie.

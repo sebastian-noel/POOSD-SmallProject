@@ -1,4 +1,4 @@
-const API_URL = window.APP_CONFIG?.API_URL || 'http://localhost:5000/api/auth/register';
+const API_URL = window.APP_CONFIG?.API_URL || '../php/auth/register.php';
 
 const form = document.getElementById('signupForm');
 const submitButton = document.getElementById('submitButton');

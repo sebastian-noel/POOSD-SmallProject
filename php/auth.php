@@ -16,6 +16,7 @@ session_set_cookie_params([
     'httponly' => true,
 ]);
 session_start();
+header('Cache-Control: no-store');
 
 function json_response(int $status, array $data): void {
     http_response_code($status);

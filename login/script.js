@@ -1,4 +1,4 @@
-const API_URL = window.APP_CONFIG?.API_URL || 'http://localhost:5000/api/auth/login';
+const API_URL = window.APP_CONFIG?.API_URL || '../php/auth/login.php';
 
 const form = document.getElementById('loginForm');
 const submitButton = document.getElementById('submitButton');
@@ -58,14 +58,7 @@ form.addEventListener('submit', async (event) => {
     const result = await loginUser({ email, password, rememberMe });
     setMessage(result.message || 'Login successful. Redirecting...', 'success');
 
-    if (result.token) {
-      localStorage.setItem('authToken', result.token);
-    }
-
-    window.setTimeout(() => {
-      // Replace this with your app route when backend is connected.
-      console.log('Authenticated user:', result);
-    }, 600);
+    window.location.replace('../contacts/contacts.html');
   } catch (error) {
     setMessage(error.message || 'Something went wrong. Please try again.', 'error');
   } finally {

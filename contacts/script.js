@@ -1,20 +1,68 @@
-const API_URL = window.APP_CONFIG?.API_URL || 'http://localhost:5000/api/contacts';
+const API_URL = window.APP_CONFIG?.API_URL || '../php/contacts.php';
+const AUTH_BASE_URL = window.APP_CONFIG?.AUTH_BASE_URL || '../php/auth';
 //most code adopted from COLORS lab, pls dont kill me :(
 
-let userName = "";
-let firstName = "";
-let lastName = "";
 let editContactId = null;
 
-function doLogout()
+async function doLogout()
 {
-	userName = "";
-	firstName = "";
-	lastName = "";
-	document.cookie = "firstName=; expires = Thu, 01 Jan 1970 00:00:00 GMT";
-	document.cookie = "lastName=; expires = Thu, 01 Jan 1970 00:00:00 GMT";
-	document.cookie = "userName=; expires = Thu, 01 Jan 1970 00:00:00 GMT";
-	window.location.href = "index.html";
+	const button = document.getElementById('logoutBtn');
+	button.disabled = true;
+	try
+	{
+		const response = await fetch(AUTH_BASE_URL + '/logout.php', {
+			method: 'POST',
+			credentials: 'include',
+			headers: { Accept: 'application/json' },
+		});
+		if (!response.ok) throw new Error('Logout failed');
+		window.location.replace('../login/index.html');
+	}
+	catch
+	{
+		const message = document.getElementById('contactSearchResult');
+		message.textContent = 'Unable to log out. Please try again.';
+		message.className = 'contact-message error';
+	}
+	finally
+	{
+		button.disabled = false;
+	}
+}
+
+async function checkSession()
+{
+	const panel = document.getElementById('contactsPanel');
+	const message = document.getElementById('sessionMessage');
+	panel.hidden = true;
+	document.getElementById('contactsTableBody').replaceChildren();
+	document.getElementById('popupOverlay').style.display = 'none';
+	message.textContent = 'Checking your session...';
+	try
+	{
+		const response = await fetch(AUTH_BASE_URL + '/me.php', {
+			credentials: 'include',
+			cache: 'no-store',
+			headers: { Accept: 'application/json' },
+		});
+		if (response.status === 401)
+		{
+			window.location.replace('../login/index.html');
+			return false;
+		}
+		if (!response.ok) throw new Error('Session check failed');
+		const data = await response.json();
+		if (!data.user?.id) throw new Error('Missing user');
+		message.textContent = '';
+		panel.hidden = false;
+		return true;
+	}
+	catch
+	{
+		message.textContent = 'Unable to check your session. Reload the page to try again.';
+		message.className = 'contact-message error';
+		return false;
+	}
 }
 
 function addContact()
@@ -215,7 +263,7 @@ function fetchContactForEdit(id)
 	xhr.send();
 }
 
-document.addEventListener("DOMContentLoaded", function ()
+document.addEventListener("DOMContentLoaded", async function ()
 {
 	let overlay = document.getElementById("popupOverlay");
 	let addBtn = document.getElementById("addContactBtn");
@@ -281,5 +329,11 @@ document.addEventListener("DOMContentLoaded", function ()
 	let logoutBtn = document.getElementById("logoutBtn");
 	logoutBtn.addEventListener("click", doLogout);
  
-	createContacts();
+	if (await checkSession()) createContacts();
+});
+
+// A page restored with Back/Forward must check the session again before showing data.
+window.addEventListener('pageshow', async function(event)
+{
+	if (event.persisted && await checkSession()) createContacts();
 });
