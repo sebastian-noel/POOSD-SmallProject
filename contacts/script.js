@@ -17,7 +17,15 @@ function doLogout()
 
 function addContact()
 {
-	let tmp = {firstName:document.getElementById("firstName").value, lastName:document.getElementById("lastName").value, phone:document.getElementById("contactPhone").value, email:document.getElementById("contactEmail").value, address:document.getElementById("contactAddress").value, notes:document.getElementById("notes").value, dateCreated:document.getElementById("dateCreated").value};
+	let tmp = {
+	first_name: document.getElementById("firstName").value,
+	last_name: document.getElementById("lastName").value,
+	phone: document.getElementById("contactPhone").value,
+	email: document.getElementById("contactEmail").value,
+	address: document.getElementById("contactAddress").value,
+	notes: document.getElementById("notes").value,
+	date_created: document.getElementById("dateCreated").value
+	};
 	let jsonPayload = JSON.stringify( tmp );
 	let url = API_URL;
 	
@@ -107,9 +115,30 @@ function loadContacts(contacts)
 	contacts.forEach(function(contact)
 	{
 	let r = document.createElement("tr");
-	r.innerHTML = "<td>" + contact.firstName + " " + contact.lastName + "</td>" + "<td>" + contact.email + "</td>" + "<td>" + contact.phone + "</td>" + "<td>" + (contact.dateCreated || "") + "</td>" +"<td>" + "<button class=\"secondary-btn\" type=\"button\">Edit</button> " +"<button class=\"btn-delete\" type=\"button\">Delete</button>" + "</td>";
+	r.innerHTML = "<td>" + contact.first_name + " " + contact.last_name + "</td>" + "<td>" + contact.email + "</td>" + "<td>" + contact.phone + "</td>" + "<td>" + (contact.date_created || "") + "</td>" +"<td>" + "<button class=\"secondary-btn\" type=\"button\">Edit</button> " +"<button class=\"btn-delete\" type=\"button\" data-id=\"" + contact.id + "\">Delete</button>" + "</td>";
 	body.appendChild(r);
 	});
+}
+
+function deleteContact(id)
+{
+	let xhr = new XMLHttpRequest();
+	xhr.open("DELETE", API_URL + '?id=' + id, true);
+	xhr.onreadystatechange = function()
+	{
+		if (this.readyState == 4 && (this.status == 200 || this.status == 204))
+		{
+			document.getElementById("contactDeleteResult").innerHTML = "Contact deleted";
+			document.getElementById("contactDeleteResult").className = "contact-message success";
+			createContacts(); // refresh the table
+		}
+		else if (this.readyState == 4)
+		{
+			document.getElementById("contactDeleteResult").innerHTML = "Error deleting contact";
+			document.getElementById("contactDeleteResult").className = "contact-message error";
+		}
+	};
+	xhr.send();
 }
 
 document.addEventListener("DOMContentLoaded", function ()
@@ -119,6 +148,19 @@ document.addEventListener("DOMContentLoaded", function ()
 	let closeBtn = document.getElementById("closePopupBtn");
 	let form = document.getElementById("contactForm");
 	let searchBox = document.getElementById("searchBox");
+	let tableBody = document.getElementById("contactsTableBody");
+	tableBody.addEventListener("click", function(event)
+	{
+		if (event.target.classList.contains("btn-delete"))
+		{
+			let id = event.target.getAttribute("data-id");
+			let confirmed = window.confirm("Delete this contact? This can't be undone.");
+			if (confirmed)
+			{
+			deleteContact(id);
+			}
+		}
+	});
 	addBtn.addEventListener("click", function()
 	{
 		overlay.style.display = "grid";
