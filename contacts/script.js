@@ -42,6 +42,7 @@ function addContact()
 			{
 				document.getElementById("contactAddResult").innerHTML = "Contact has been added";
 				document.getElementById("contactAddResult").className = "contact-message success"; //color
+				createContacts();
 			} else if (this.readyState == 4) // added to catch error on php to be able to notify user when contact cannot be added
 			{
 				let jsonObject = JSON.parse(xhr.responseText);
@@ -102,6 +103,7 @@ function createContacts()
 			loadContacts(jsonObject.contacts);
 		}
 	}
+	xhr.send();
 }
 
 function loadContacts(contacts)
