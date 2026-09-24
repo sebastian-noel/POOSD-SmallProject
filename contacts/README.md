@@ -9,13 +9,15 @@ Add, search, edit, list, delete contacts
 
 ## API Integration
 
-Update the `API_URL` in `script.js` to match your backend endpoint:
+You may update the `API_URL` in `script.js` to match your backend endpoint:
 
 ```javascript
-const API_URL = 'http://localhost:5000/api/contacts';
+const API_URL = window.APP_CONFIG?.API_URL || 'http://localhost:5000/api/contacts';
 ```
-##Endpoints
+## Endpoints
 Every request is accessed through the user's server-side. One user cannot alter another users contact page.
+
+Note: The search will only run when you hit enter. This is intentional, auto-fill is something to note in later updates.
 | Method | URL | What it does |
 |---|---|---|
 | `GET` | `{API_URL}` | Get all my contacts |
@@ -28,38 +30,44 @@ Every request is accessed through the user's server-side. One user cannot alter 
 ### Expected Request Body
 The first and last name are required & the email is required to be a real email if filled in, other inputs are optional.
 
-Note: The search will only run when you hit enter. This is intentional, auto-fill is something to note in later updates.
 ```json
 {
-	"firstName": "Jane",
-	"lastName": "Doe",
+	"first_name": "Jane",
+	"last_name": "Doe",
 	"email": "jane@example.com",
 	"phone": "555-0100",
 	"address": "123 Main St",
 	"notes": "met at conference",
-	"dateCreated": "2026-09-23"
+	"date_created": "2026-09-23"
 }
 ```
 
 ### Expected Successful Response Shape
-```json
-{
-  // GET (list or search)
-	{ "contacts": [ { "id": 1, "first_name": "Jane", "last_name": "Doe", "email": "...", "phone": "...", "address": "...", "notes": "...", "date_created": "..." } ] }
 
-	// GET (one contact)
-	{ "contact": { "id": 5, "first_name": "...", ... } }
+GET (list or search):
+​```json
+{ "contacts": [ { "id": 1, "first_name": "Jane", "last_name": "Doe", "email": "...", "phone": "...", "address": "...", "notes": "...", "date_created": "..." } ] }
+​```
 
-	// POST (201) / PUT (200)
-	{ "message": "Contact created", "contact": { ...the new or updated contact... } }
+GET (one contact):
+​```json
+{ "contact": { "id": 5, "first_name": "...", "last_name": "...", "email": "...", "phone": "...", "address": "...", "notes": "...", "date_created": "..." } }
+​```
 
-	// DELETE (200)
-	{ "message": "Contact deleted" }
+POST (201) / PUT (200):
+​```json
+{ "message": "Contact created", "contact": { "id": 1, "first_name": "...", "last_name": "...", "..." } }
+​```
 
-	// Anything that goes wrong (400 / 404 / 405)
-	{ "message": "..." }
-}
-```
+DELETE (200):
+​```json
+{ "message": "Contact deleted" }
+​```
+
+Anything that goes wrong (400 / 404 / 405):
+​```json
+{ "message": "..." }
+​```
 
 ## Run Locally
 
