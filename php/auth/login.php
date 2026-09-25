@@ -3,18 +3,15 @@
 // Body: { "email": "...", "password": "...", "rememberMe": true }
 require_once __DIR__ . '/../auth.php';
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    json_response(405, ['message' => 'Method not allowed']);
-}
+require_method(['POST']);
 
 $body = get_json_body();
-$email    = trim($body['email'] ?? '');
-$password = $body['password'] ?? '';
-$rememberMe = !empty($body['rememberMe']);
-
-if ($email === '' || $password === '') {
-    json_response(400, ['message' => 'email and password are required']);
+$email = email_field($body, true);
+$password = password_field($body);
+if (array_key_exists('rememberMe', $body) && !is_bool($body['rememberMe'])) {
+    json_response(400, ['message' => 'rememberMe must be a boolean']);
 }
+$rememberMe = $body['rememberMe'] ?? false;
 
 $db = get_db();
 $stmt = $db->prepare(
