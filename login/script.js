@@ -11,11 +11,14 @@ function setMessage(text, type = '') {
 
   if (type) {
     messageBox.classList.add(type);
+    if (type === 'error') messageBox.focus();
   }
 }
 
 function setLoading(isLoading) {
   submitButton.disabled = isLoading;
+  submitButton.setAttribute('aria-busy', String(isLoading));
+  form.setAttribute('aria-busy', String(isLoading));
   buttonText.textContent = isLoading ? 'Signing in...' : 'Sign in';
 }
 
@@ -41,6 +44,9 @@ async function loginUser(payload) {
 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
+  if (submitButton.disabled) return;
+  setMessage('');
+  if (!form.reportValidity()) return;
 
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;

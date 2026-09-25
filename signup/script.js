@@ -11,11 +11,14 @@ function setMessage(text, type = '') {
 
   if (type) {
     messageBox.classList.add(type);
+    if (type === 'error') messageBox.focus();
   }
 }
 
 function setLoading(isLoading) {
   submitButton.disabled = isLoading;
+  submitButton.setAttribute('aria-busy', String(isLoading));
+  form.setAttribute('aria-busy', String(isLoading));
   buttonText.textContent = isLoading ? 'Creating account...' : 'Create account';
 }
 
@@ -41,6 +44,9 @@ async function registerUser(payload) {
 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
+  if (submitButton.disabled) return;
+  setMessage('');
+  if (!form.reportValidity()) return;
 
   const username = document.getElementById('username').value.trim();
   const email = document.getElementById('email').value.trim();
@@ -51,8 +57,13 @@ form.addEventListener('submit', async (event) => {
     return;
   }
 
-  if (password.length < 8) {
+  if ([...password].length < 8) {
     setMessage('Password must be at least 8 characters.', 'error');
+    return;
+  }
+
+  if (new TextEncoder().encode(password).length > 72) {
+    setMessage('Please use a password of 72 bytes or fewer. Some characters use more than one byte.', 'error');
     return;
   }
 

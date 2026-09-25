@@ -3,7 +3,8 @@
 ## Files
 
 - `index.html` — page structure
-- `styles.css` — styling and layout (shared look with the login page)
+- `../assets/ui.css` and `../assets/auth.css` — shared controls and authentication layout
+- `../assets/forms.js` — password visibility and accessible validation states
 - `script.js` — form logic and API integration
 
 ## API integration

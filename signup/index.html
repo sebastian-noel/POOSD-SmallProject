@@ -1,50 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Contact Manager — Sign up</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <main class="page-shell">
-      <section class="login-panel" aria-label="Sign up panel">
-        <h1>Contact Manager</h1>
-        <p class="subtitle">Create an account to manage your contacts</p>
-
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#284e3d" />
+  <title>Create account | Contact Manager</title>
+  <link rel="stylesheet" href="../assets/ui.css" />
+  <link rel="stylesheet" href="../assets/auth.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to create account</a>
+  <div class="auth-page">
+    <aside class="auth-story" aria-label="About Contact Manager">
+      <a class="brand" href="../login/index.html"><span class="brand-mark"><svg class="icon" aria-hidden="true"><use href="../assets/icons.svg#book"></use></svg></span>Contact Manager</a>
+      <div class="story-content">
+        <div class="eyebrow">A little more connected</div>
+        <h2>One place for<br />your people.</h2>
+        <p>Keep the names, numbers, and small details that make staying in touch easier.</p>
+        <div class="address-illustration" aria-hidden="true">
+          <div class="sample-contact">
+            <div class="sample-top"><span class="sample-avatar">AM</span><div><div class="sample-name">Avery Morgan</div><div class="sample-label">A familiar face</div></div></div>
+            <div class="sample-detail">avery@example.com<br />(407) 555-0128</div>
+          </div>
+        </div>
+      </div>
+      <p class="story-footer"><svg class="icon" aria-hidden="true"><use href="../assets/icons.svg#lock"></use></svg>Your contacts. Your own space.</p>
+    </aside>
+    <main class="auth-main" id="main" tabindex="-1">
+      <section class="auth-form-wrap" aria-labelledby="pageTitle">
+        <p class="eyebrow">Make yourself at home</p>
+        <h1 id="pageTitle">Create your account</h1>
+        <p class="auth-intro">A little space for the people in your life.</p>
         <form id="signupForm" class="login-form" novalidate>
-          <div class="field-group">
-            <label for="username">Username</label>
-            <input id="username" name="username" type="text" placeholder="yourusername" autocomplete="username" required />
-          </div>
-
-          <div class="field-group">
-            <label for="email">Email</label>
-            <input id="email" name="email" type="email" placeholder="you@example.com" autocomplete="email" required />
-          </div>
-
+          <div class="field-group"><label for="username">Username</label><input id="username" name="username" type="text" autocomplete="username" maxlength="50" placeholder="Choose a username" required /></div>
+          <div class="field-group"><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="email" maxlength="254" placeholder="you@example.com" required /></div>
           <div class="field-group">
             <label for="password">Password</label>
-            <input id="password" name="password" type="password" placeholder="At least 8 characters" autocomplete="new-password" minlength="8" required />
+            <div class="password-control"><input id="password" name="password" type="password" autocomplete="new-password" minlength="8" aria-describedby="passwordHint" required /><button class="password-toggle" type="button" data-password-toggle="password" aria-label="Show password" aria-pressed="false" aria-controls="password">Show</button></div>
+            <p id="passwordHint" class="field-hint">Use at least 8 characters. Longer passphrases work well.</p>
           </div>
 
-          <button type="submit" class="primary-btn" id="submitButton">
-            <span class="btn-text">Create account</span>
-          </button>
-
-          <div id="formMessage" class="form-message" role="alert" aria-live="polite"></div>
+          <div id="formMessage" class="form-message" role="status" aria-live="polite" tabindex="-1"></div>
+          <button type="submit" class="primary-btn" id="submitButton"><span class="btn-text">Create account</span><svg class="icon" aria-hidden="true"><use href="../assets/icons.svg#arrow"></use></svg></button>
         </form>
-
-        <p class="signup-link">
-          Already have an account?
-          <a href="../login/index.html">Log in</a>
-        </p>
+        <p class="signup-link">Already have an account? <a href="../login/index.html">Sign in</a></p>
+        <p class="auth-footnote"><svg class="icon" aria-hidden="true"><use href="../assets/icons.svg#lock"></use></svg>Only you can access the contacts in your account.</p>
       </section>
     </main>
-
-    <script src="script.js"></script>
-  </body>
+  </div>
+  <script src="../assets/forms.js"></script>
+  <script src="script.js"></script>
+</body>
 </html>
