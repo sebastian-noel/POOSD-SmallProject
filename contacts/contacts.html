@@ -1,105 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
-
-
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-		<title>Contact Manager Dashboard</title>
-		<link rel="stylesheet" href="styles.css" />
-
-	</head>
-	<body>
-		<!--main content-->
-		<main class="page-shell">
-			<div id="sessionMessage" class="contact-message" role="status" aria-live="polite">Checking your session...</div>
-			<!--card-->
-			<section id="contactsPanel" class="contacts-panel" aria-label="Contacts Panel" hidden>
-				<h1>Contact Manager</h1>
-				<p class="subtitle">Manage and search your contacts</p>
-				<!--search/add-->
-				<div class="toolbar">
-					<input id="searchBox"
-						class="search-text"
-						type="search"
-						placeholder="Search contacts..."
-						aria-label="Search Contacts"
-					/>
-					<button id="addContactBtn" class="primary-btn" style="width: auto;">
-						Add Contact
-					</button>
-					<button id="logoutBtn" class="secondary-btn" type="button" style="width: auto;">
-						Logout
-					</button>
-				</div>
-				<div id="contactSearchResult" class="contact-message" role="status" aria-live="polite"></div>
-				<div id="contactDeleteResult" class="contact-message" role="alert" aria-live="assertive"></div>
-				<!--table-->
-				<table class="contacts-table">
-					<thead>
-					<tr>
-						<th>Name</th>
-						<th>Email</th>
-						<th>Phone</th>
-						<th>Date Created</th>
-						<th>Actions</th>
-					</tr>
-					</thead>
-					<tbody id="contactsTableBody">
-					</tbody>
-				</table>
-			</section>
-		</main>
-
-		<div id="popupOverlay" class="popup-overlay" style="display: none;">
-			<div class="popup-content">
-				<h2 id="popupTitle">Add Contact</h2>
-				<form id="contactForm" novalidate>
-					<div class="field-group">
-						<label for="firstName">First Name</label>
-						<input id="firstName" name="firstName" type="text" placeholder="First Name" maxlength="50" required />
-					</div>
-
-					<div class="field-group">
-						<label for="lastName">Last Name</label>
-						<input id="lastName" name="lastName" type="text" placeholder="Last Name" maxlength="50" required />
-					</div>
-
-					<div class="field-group">
-						<label for="contactEmail">Email</label>
-						<input id="contactEmail" name="email" type="email" placeholder="Email Address" maxlength="254" />
-					</div>
-
-					<div class="field-group">
-						<label for="contactPhone">Phone</label>
-						<input id="contactPhone" name="phone" type="tel" placeholder="Phone Number" maxlength="20" />
-					</div>
-
-					<div class="field-group">
-						<label for="contactAddress">Address</label>
-						<input id="contactAddress" name="address" type="text" placeholder="Address" maxlength="255" />
-					</div>
-
-					<div class="field-group">
-						<label for="notes">Notes</label>
-						<input id="notes" name="notes" type="text" placeholder="Notes" />
-					</div>
-
-					<div style="display: flex; gap: 10px; margin-top: 20px;">
-						<button type="button" id="closePopupBtn" class="secondary-btn" style="flex: 1;">
-							Cancel
-						</button>
-						<button id="saveContactBtn" type="submit" class="primary-btn" style="flex: 1;">
-							Save Contact
-						</button>
-					</div>
-
-					<div id="contactAddResult" class="contact-message" role="status" aria-live="polite"></div>
-				</form>
-			</div>
-		</div>
-
-		<script src="script.js"></script>
-	</body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contacts | Contact Manager</title>
+  <link rel="stylesheet" href="../assets/ui.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to contacts</a>
+  <header class="app-header">
+    <a class="brand" href="contacts.html"><span class="brand-mark"><svg class="icon" aria-hidden="true"><use href="../assets/icons.svg#book"></use></svg></span>Contact Manager</a>
+    <div id="accountControls" class="account-controls" hidden><span class="account-avatar" id="accountAvatar" aria-hidden="true"></span><span id="accountName" class="account-name"></span><button id="logoutBtn" class="text-btn" type="button"><svg class="icon" aria-hidden="true"><use href="../assets/icons.svg#logout"></use></svg><span>Sign out</span></button></div>
+  </header>
+  <main class="page-shell" id="main" tabindex="-1">
+    <div id="sessionMessage" class="contact-message" role="status" aria-live="polite">Checking your session...</div>
+    <section id="contactsPanel" aria-labelledby="pageTitle" hidden>
+      <div class="page-heading">
+        <div><p class="eyebrow">Your personal address book</p><div class="title-row"><h1 id="pageTitle">Contacts</h1><span id="contactCount" class="count-label"></span></div><p class="page-description">A familiar face is always a quick search away.</p></div>
+        <button id="addContactBtn" class="primary-btn" type="button" aria-controls="contactEditor" aria-expanded="false"><svg class="icon" aria-hidden="true"><use href="../assets/icons.svg#plus"></use></svg>Add contact</button>
+      </div>
+      <div class="search-toolbar">
+        <form id="searchForm" role="search" aria-label="Search contacts">
+          <div class="search-input"><label for="searchBox" class="sr-only">Search contacts</label><svg class="icon" aria-hidden="true"><use href="../assets/icons.svg#search"></use></svg><input id="searchBox" name="search" type="search" placeholder="Search by name, email, or phone" maxlength="254" aria-describedby="searchHint" /></div>
+          <button class="secondary-btn" type="submit">Search</button>
+          <button id="clearSearchBtn" class="text-btn" type="button" hidden>Clear</button>
+        </form>
+        <p id="searchHint" class="search-hint">Find a name, or just part of one.</p>
+      </div>
+      <div id="contactSearchResult" class="contact-message action-message" role="status" aria-live="polite" tabindex="-1"></div>
+      <div class="workspace" id="workspace">
+        <aside class="contact-editor" id="contactEditor" aria-labelledby="editorTitle" hidden>
+          <div class="editor-heading"><div><p class="eyebrow">Make a connection</p><h2 id="editorTitle">New contact</h2></div><button id="closeEditorBtn" class="text-btn icon-button" type="button" aria-label="Close contact editor"><svg class="icon" aria-hidden="true"><use href="../assets/icons.svg#close"></use></svg></button></div>
+          <p class="editor-description">Start with a name. Add the rest whenever you're ready.</p>
+          <form id="contactForm" novalidate>
+            <div class="field-grid"><div class="field-group"><label for="firstName">First name</label><input id="firstName" name="firstName" type="text" autocomplete="given-name" maxlength="50" required /></div><div class="field-group"><label for="lastName">Last name</label><input id="lastName" name="lastName" type="text" autocomplete="family-name" maxlength="50" required /></div></div>
+            <div class="field-group"><label for="contactEmail">Email <span class="optional">optional</span></label><input id="contactEmail" name="email" type="email" autocomplete="email" placeholder="name@example.com" maxlength="254" /></div>
+            <div class="field-group"><label for="contactPhone">Phone <span class="optional">optional</span></label><input id="contactPhone" name="phone" type="tel" autocomplete="tel" maxlength="20" /></div>
+            <div class="field-group"><label for="contactAddress">Address <span class="optional">optional</span></label><input id="contactAddress" name="address" type="text" autocomplete="street-address" maxlength="255" /></div>
+            <div class="field-group"><label for="notes">Notes <span class="optional">optional</span></label><textarea id="notes" name="notes" rows="3" placeholder="A detail worth remembering" aria-describedby="notesHint"></textarea><p id="notesHint" class="field-hint">First and last name are required. Other details are up to you.</p></div>
+            <div id="contactAddResult" class="contact-message" role="status" aria-live="polite" tabindex="-1"></div>
+            <div class="editor-actions"><button id="saveContactBtn" class="primary-btn" type="submit">Save contact</button><button id="closePopupBtn" class="text-btn" type="button">Cancel</button></div>
+          </form>
+        </aside>
+        <div class="contact-list">
+          <div class="list-heading"><h2 id="listSummary">All contacts</h2><span class="sort-label">Sorted by last name</span></div>
+          <div id="listStatus" class="contact-message" role="status" aria-live="polite"></div>
+          <button id="retryContactsBtn" class="secondary-btn retry-button" type="button" hidden>Try again</button>
+          <div id="listContent" aria-busy="false">
+            <table class="contacts-table" id="contactsTable" role="table">
+              <caption class="sr-only">Your private contacts, sorted by last name</caption>
+              <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Name</th><th scope="col" role="columnheader">Email</th><th scope="col" role="columnheader">Phone</th><th scope="col" role="columnheader" class="date-column">Added</th><th scope="col" role="columnheader"><span class="sr-only">Actions</span></th></tr></thead>
+              <tbody id="contactsTableBody" role="rowgroup"></tbody>
+            </table>
+            <div id="emptyState" class="empty-state" hidden><span class="empty-symbol"><svg class="icon" aria-hidden="true"><use href="../assets/icons.svg#book"></use></svg></span><h2 id="emptyTitle">Your people, all together.</h2><p id="emptyDescription">Add your first contact to start your address book.</p><button id="emptyActionBtn" class="primary-btn" type="button">Add your first contact</button></div>
+          </div>
+          <p class="list-footer"><svg class="icon" aria-hidden="true"><use href="../assets/icons.svg#lock"></use></svg>This address book is visible only to you.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+  <dialog id="deleteDialog" aria-labelledby="deleteTitle" aria-describedby="deleteDescription">
+    <form id="deleteForm"><p class="eyebrow">Remove a contact</p><h2 id="deleteTitle">Delete this contact?</h2><p id="deleteDescription"></p><div id="deleteError" class="contact-message error" role="status" tabindex="-1"></div><div class="dialog-actions"><button id="cancelDeleteBtn" class="secondary-btn" type="button" autofocus>Keep contact</button><button id="confirmDeleteBtn" class="danger-btn" type="submit">Delete contact</button></div></form>
+  </dialog>
+  <script src="../assets/forms.js"></script>
+  <script src="script.js"></script>
+</body>
 </html>

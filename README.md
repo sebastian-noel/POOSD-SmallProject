@@ -26,3 +26,13 @@ Never commit database passwords, AWS credentials, or EC2 private keys.
 
 See [the AWS setup and database handoff](docs/aws-setup.md) for the current
 infrastructure status and database integration steps.
+
+## Frontend
+
+The sign-in, registration, and contacts screens share controls and colors in
+`assets/ui.css`. Authentication layouts live in `assets/auth.css`; contact list
+and editor layouts live in `contacts/styles.css`. No frontend build is required.
+
+See [DESIGN.md](DESIGN.md) for the visual system and
+[frontend accessibility checks](docs/frontend-accessibility.md) for tested
+workflows, scan results, and remaining presentation checks.

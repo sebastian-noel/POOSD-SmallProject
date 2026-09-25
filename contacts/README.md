@@ -3,8 +3,9 @@ Add, search, edit, list, delete contacts
 
 ## Files
 
-- `contacts.html` — page structure (inc. table, toolbar, add contact popup)
-- `styles.css` — styling and layout
+- `contacts.html` — page structure, responsive table, search toolbar, inline editor, and delete confirmation
+- `styles.css` — responsive contacts layout
+- `../assets/ui.css` and `../assets/forms.js` — shared controls and validation states
 - `script.js` — form logic and API integration (api calls, table rendering, behaviors)
 
 ## API Integration
@@ -25,7 +26,9 @@ HTTPS origin and authenticate with the HttpOnly PHP session cookie.
 ## Endpoints
 Every request is accessed through the user's server-side. One user cannot alter another users contact page.
 
-Note: The search will only run when you hit enter. This is intentional, auto-fill is something to note in later updates.
+Search runs on Enter or the Search button and always queries the server. Clear
+returns to all contacts. The current search stays active after saves and deletes;
+older search responses cannot overwrite newer results.
 | Method | URL | What it does |
 |---|---|---|
 | `GET` | `{API_URL}` | Get all my contacts |
@@ -84,7 +87,7 @@ Input length limits match the database columns. These browser checks do not
 replace validation in the API.
 
 While a save is pending, the form controls are disabled to prevent duplicate
-submissions. The popup closes and clears only after a successful response confirms
+submissions. The inline editor closes and clears only after a successful response confirms
 the saved contact. Server errors, invalid responses, network failures, and a
 15-second timeout keep the entries visible for correction or retry. A successful
 save refreshes the table and displays a confirmation on the dashboard.
