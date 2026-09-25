@@ -1,161 +1,627 @@
-openapi: 3.0.3
+# Presentation: login in SwaggerHub, then search in the web application.
+swagger: '2.0'
 info:
   title: Personal Contact Manager API
-  description: >
-    REST API for a per-user contact manager. All contacts endpoints require
-    an active login session (cookie set by POST /login.php). This spec
-    demonstrates the two endpoints presented live: contact search
-    (GET /contacts.php) and contact creation (POST /contacts.php).
-  version: "1.0.0"
-servers:
-  - url: https://YOUR-DOMAIN-HERE.com/api
-    description: Production (replace with your actual domain — no IP addresses)
-
-components:
-  securitySchemes:
-    cookieAuth:
-      type: apiKey
-      in: cookie
-      name: PHPSESSID
-  schemas:
-    Contact:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 12
-        user_id:
-          type: integer
-          example: 3
-        first_name:
-          type: string
-          example: Ada
-        last_name:
-          type: string
-          example: Lovelace
-        phone:
-          type: string
-          example: "407-555-0134"
-        email:
-          type: string
-          example: ada@example.com
-        address:
-          type: string
-          example: "123 Analytical Engine Way"
-        notes:
-          type: string
-          example: "Met at the UCF career fair"
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-    NewContact:
-      type: object
-      required: [first_name, last_name]
-      properties:
-        first_name:
-          type: string
-          example: Ada
-        last_name:
-          type: string
-          example: Lovelace
-        phone:
-          type: string
-          example: "407-555-0134"
-        email:
-          type: string
-          example: ada@example.com
-        address:
-          type: string
-          example: "123 Analytical Engine Way"
-        notes:
-          type: string
-          example: "Met at the UCF career fair"
-    Error:
-      type: object
-      properties:
-        error:
-          type: string
-          example: Not logged in
-
-security:
-  - cookieAuth: []
-
+  version: 1.0.0
+  description: 'PHP/MySQL API for private, per-user contacts. Demonstrate only POST /auth/login.php in SwaggerHub.
+    Show search in the web application; other operations are reference documentation. JSON object bodies are limited to
+    1,048,576 bytes and require Content-Type: application/json. All errors contain message. Text fields
+    reject null bytes and invalid types; unknown body fields are ignored. Contact operations require authentication
+    before body/query validation. See docs/api-demo.md for the presentation script and rehearsal evidence.
+    This definition matches the PHP request validation implementation. Protected
+    operations require the PHPSESSID cookie issued by login. Swagger 2.0 cannot model cookie authentication
+    natively; session requirements are documented in descriptions and x-session-required, which does not
+    configure request routing.'
+host: contacts.snoel.dev
+basePath: /php
+schemes:
+- https
+consumes:
+- application/json
+produces:
+- application/json
+tags:
+- name: Presentation
+  description: Login is the only operation selected for the live SwaggerHub demonstration.
+- name: Contacts
+  description: Additional contact operations; outside the presentation sequence.
+- name: Account
+  description: Additional account operations; outside the presentation sequence.
 paths:
+  /auth/login.php:
+    post:
+      operationId: login
+      summary: Presentation — Log in
+      tags:
+      - Presentation
+      responses:
+        '200':
+          description: Login successful; PHPSESSID session cookie is issued.
+          headers:
+            Set-Cookie:
+              description: PHPSESSID cookie with Path=/, Secure, HttpOnly and SameSite=Lax. The session
+                ID is regenerated after successful login.
+              type: string
+          schema:
+            $ref: '#/definitions/AuthSuccess'
+          examples:
+            application/json:
+              message: Login successful
+              user:
+                id: 1
+                username: DemoUser
+                email: demo@example.com
+        '400':
+          $ref: '#/responses/BadRequest'
+        '401':
+          $ref: '#/responses/Unauthorized'
+        '405':
+          $ref: '#/responses/MethodNotAllowed'
+        '413':
+          $ref: '#/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/responses/UnsupportedMediaType'
+        '500':
+          $ref: '#/responses/ServerError'
+      x-session-required: false
+      parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/LoginInput'
   /contacts.php:
     get:
-      summary: List or search the current user's contacts
-      description: >
-        With no query parameters, returns every contact belonging to the
-        logged-in user. With `search`, performs a server-side, partial
-        (substring) match against first name, last name, email, and phone —
-        the client never caches the full contact list locally.
+      operationId: searchContacts
+      summary: Search or read your contacts
+      tags:
+      - Contacts
+      responses:
+        '200':
+          description: 'Without id: contacts array, including an empty array for no matches. With id:
+            one contact object.'
+          schema:
+            $ref: '#/definitions/ContactReadResult'
+          examples:
+            application/json:
+              contacts:
+              - id: 12
+                user_id: 1
+                first_name: Joanna
+                last_name: Jones
+                phone: 407-555-0134
+                email: joanna@example.com
+                address: 123 Example Street
+                notes: null
+                created_at: '2026-09-24 14:00:00'
+                updated_at: '2026-09-24 14:00:00'
+          x-response-examples:
+            matches:
+              contacts:
+              - id: 12
+                user_id: 1
+                first_name: Joanna
+                last_name: Jones
+                phone: 407-555-0134
+                email: joanna@example.com
+                address: 123 Example Street
+                notes: null
+                created_at: '2026-09-24 14:00:00'
+                updated_at: '2026-09-24 14:00:00'
+            noMatches:
+              contacts: []
+            byId:
+              contact:
+                id: 12
+                user_id: 1
+                first_name: Joanna
+                last_name: Jones
+                phone: 407-555-0134
+                email: joanna@example.com
+                address: 123 Example Street
+                notes: null
+                created_at: '2026-09-24 14:00:00'
+                updated_at: '2026-09-24 14:00:00'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '401':
+          $ref: '#/responses/Unauthorized'
+        '404':
+          $ref: '#/responses/NotFound'
+        '405':
+          $ref: '#/responses/MethodNotAllowed'
+        '500':
+          $ref: '#/responses/ServerError'
+      description: Requires an authenticated PHPSESSID session cookie from login. Search runs on the server
+        against first_name, last_name, email, and phone using a prepared SQL substring match. Percent
+        signs, underscores and backslashes are escaped as literals. Results belong only to the session
+        user and are ordered by last_name, first_name. Blank or absent search returns the user's list.
+        id takes precedence over search and returns a single contact. The supplied database schema uses
+        a case-insensitive collation.
       parameters:
-        - name: search
-          in: query
-          required: false
-          description: Partial-match search term (matched with SQL LIKE '%term%').
-          schema:
-            type: string
-          example: love
-        - name: id
-          in: query
-          required: false
-          description: Return a single contact by id instead of a list.
-          schema:
-            type: integer
-      responses:
-        "200":
-          description: A list (or single object) of matching contacts
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  contacts:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Contact"
-        "401":
-          description: Not logged in
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
+      - name: search
+        in: query
+        description: Trimmed substring, at most 254 characters after trimming. Leave id unset to search.
+        type: string
+        maxLength: 254
+        x-example: jo
+      - name: id
+        in: query
+        required: false
+        description: Decimal integer 1–4294967295. No signs, whitespace, leading zeros, fractions, or
+          arrays.
+        type: integer
+        format: int64
+        minimum: 1
+        maximum: 4294967295
+      x-session-required: true
     post:
-      summary: Create a new contact for the current user
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/NewContact"
+      operationId: createContact
+      summary: Create your contact
+      tags:
+      - Contacts
       responses:
-        "201":
-          description: Contact created
-          content:
+        '201':
+          description: Contact created; the ID is inside contact.
+          schema:
+            $ref: '#/definitions/ContactSaved'
+          examples:
             application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Contact created
-                  id:
-                    type: integer
-                    example: 12
-        "400":
-          description: Missing or invalid fields
-          content:
+              message: Contact created
+              contact:
+                id: 12
+                user_id: 1
+                first_name: Joanna
+                last_name: Jones
+                phone: 407-555-0134
+                email: joanna@example.com
+                address: 123 Example Street
+                notes: Class project demo contact
+                created_at: '2026-09-24 14:00:00'
+                updated_at: '2026-09-24 14:00:00'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '401':
+          $ref: '#/responses/Unauthorized'
+        '405':
+          $ref: '#/responses/MethodNotAllowed'
+        '413':
+          $ref: '#/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/responses/UnsupportedMediaType'
+        '500':
+          $ref: '#/responses/ServerError'
+      x-session-required: true
+      description: Requires an authenticated PHPSESSID session cookie from login.
+      parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/ContactInput'
+    put:
+      operationId: updateContact
+      summary: Replace editable contact fields
+      tags:
+      - Contacts
+      responses:
+        '200':
+          description: Contact updated.
+          schema:
+            $ref: '#/definitions/ContactSaved'
+          examples:
             application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "401":
-          description: Not logged in
-          content:
+              message: Contact updated
+              contact:
+                id: 12
+                user_id: 1
+                first_name: Joanna
+                last_name: Jones
+                phone: 407-555-0134
+                email: joanna@example.com
+                address: 123 Example Street
+                notes: Class project demo contact
+                created_at: '2026-09-24 14:00:00'
+                updated_at: '2026-09-24 14:00:00'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '401':
+          $ref: '#/responses/Unauthorized'
+        '404':
+          $ref: '#/responses/NotFound'
+        '405':
+          $ref: '#/responses/MethodNotAllowed'
+        '413':
+          $ref: '#/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/responses/UnsupportedMediaType'
+        '500':
+          $ref: '#/responses/ServerError'
+      description: Requires an authenticated PHPSESSID session cookie from login. Requires id in the query
+        string. Both names are required. All optional fields omitted from the body become empty strings.
+        Ownership is checked before the body is parsed.
+      parameters:
+      - name: id
+        in: query
+        required: true
+        description: Decimal integer 1–4294967295. No signs, whitespace, leading zeros, fractions, or
+          arrays.
+        type: integer
+        format: int64
+        minimum: 1
+        maximum: 4294967295
+      - in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/ContactInput'
+      x-session-required: true
+    delete:
+      operationId: deleteContact
+      summary: Delete your contact
+      tags:
+      - Contacts
+      responses:
+        '200':
+          description: Contact deleted.
+          schema:
+            $ref: '#/definitions/Message'
+          examples:
             application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+              message: Contact deleted
+        '400':
+          $ref: '#/responses/BadRequest'
+        '401':
+          $ref: '#/responses/Unauthorized'
+        '404':
+          $ref: '#/responses/NotFound'
+        '405':
+          $ref: '#/responses/MethodNotAllowed'
+        '500':
+          $ref: '#/responses/ServerError'
+      parameters:
+      - name: id
+        in: query
+        required: true
+        description: Decimal integer 1–4294967295. No signs, whitespace, leading zeros, fractions, or
+          arrays.
+        type: integer
+        format: int64
+        minimum: 1
+        maximum: 4294967295
+      x-session-required: true
+      description: Requires an authenticated PHPSESSID session cookie from login.
+  /auth/register.php:
+    post:
+      operationId: register
+      summary: Create an account
+      tags:
+      - Account
+      responses:
+        '201':
+          description: Account created. Registration does not log in the user; use login next.
+          schema:
+            $ref: '#/definitions/AuthSuccess'
+          examples:
+            application/json:
+              message: Account created
+              user:
+                id: 1
+                username: DemoUser
+                email: demo@example.com
+        '400':
+          $ref: '#/responses/BadRequest'
+        '405':
+          $ref: '#/responses/MethodNotAllowed'
+        '409':
+          $ref: '#/responses/Conflict'
+        '413':
+          $ref: '#/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/responses/UnsupportedMediaType'
+        '500':
+          $ref: '#/responses/ServerError'
+      x-session-required: false
+      parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/RegisterInput'
+  /auth/me.php:
+    get:
+      operationId: currentUser
+      summary: Read the current session user
+      tags:
+      - Account
+      responses:
+        '200':
+          description: Current user.
+          schema:
+            type: object
+            required:
+            - user
+            properties:
+              user:
+                $ref: '#/definitions/User'
+        '401':
+          $ref: '#/responses/Unauthorized'
+        '405':
+          $ref: '#/responses/MethodNotAllowed'
+        '500':
+          $ref: '#/responses/ServerError'
+      x-session-required: true
+      description: Requires an authenticated PHPSESSID session cookie from login.
+  /auth/logout.php:
+    post:
+      operationId: logout
+      summary: End the session
+      tags:
+      - Account
+      responses:
+        '200':
+          description: Session cleared and cookie expired.
+          schema:
+            $ref: '#/definitions/Message'
+          examples:
+            application/json:
+              message: Logged out
+        '405':
+          $ref: '#/responses/MethodNotAllowed'
+        '500':
+          $ref: '#/responses/ServerError'
+      description: No JSON body is required. Also succeeds when no user is logged in.
+      x-session-required: false
+definitions:
+  Message:
+    type: object
+    required:
+    - message
+    properties:
+      message:
+        type: string
+  Error:
+    type: object
+    required:
+    - message
+    properties:
+      message:
+        type: string
+  User:
+    type: object
+    required:
+    - id
+    - username
+    - email
+    properties:
+      id:
+        type: integer
+        format: int64
+        minimum: 1
+        maximum: 4294967295
+      username:
+        type: string
+        maxLength: 50
+        example: DemoUser
+      email:
+        type: string
+        maxLength: 254
+        example: demo@example.com
+  Contact:
+    type: object
+    required:
+    - id
+    - user_id
+    - first_name
+    - last_name
+    - phone
+    - email
+    - address
+    - notes
+    - created_at
+    - updated_at
+    properties:
+      id:
+        type: integer
+        format: int64
+        minimum: 1
+        maximum: 4294967295
+      user_id:
+        type: integer
+        format: int64
+        minimum: 1
+        maximum: 4294967295
+        description: Owner assigned by the authenticated session.
+      first_name:
+        type: string
+        maxLength: 50
+        example: Joanna
+      last_name:
+        type: string
+        maxLength: 50
+        example: Jones
+      phone:
+        type: string
+        maxLength: 20
+        example: 407-555-0134
+      email:
+        type: string
+        maxLength: 254
+        description: Empty string or a valid email address.
+        example: joanna@example.com
+      address:
+        type: string
+        maxLength: 255
+        example: 123 Example Street
+      notes:
+        type: string
+        description: Stored MySQL TEXT value, at most 65,535 bytes; null is possible for rows inserted
+          directly into the database.
+        example: Class project demo contact
+        x-nullable: true
+      created_at:
+        type: string
+        pattern: ^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$
+        description: MySQL timestamp rendered as YYYY-MM-DD HH:MM:SS, without a timezone offset; not RFC
+          3339.
+        example: '2026-09-24 14:00:00'
+      updated_at:
+        type: string
+        pattern: ^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$
+        description: MySQL timestamp rendered as YYYY-MM-DD HH:MM:SS, without a timezone offset; not RFC
+          3339.
+        example: '2026-09-24 14:00:00'
+  ContactInput:
+    type: object
+    required:
+    - first_name
+    - last_name
+    properties:
+      first_name:
+        type: string
+        minLength: 1
+        maxLength: 50
+        example: Joanna
+      last_name:
+        type: string
+        minLength: 1
+        maxLength: 50
+        example: Jones
+      phone:
+        type: string
+        maxLength: 20
+        example: 407-555-0134
+      email:
+        type: string
+        maxLength: 254
+        description: Empty string or a valid email address.
+        example: joanna@example.com
+      address:
+        type: string
+        maxLength: 255
+        example: 123 Example Street
+      notes:
+        type: string
+        description: At most 65,535 UTF-8 bytes after trimming; this is a byte limit, not a character
+          limit.
+        example: Class project demo contact
+    description: All supplied fields must be strings. Text is trimmed; null bytes are rejected. Omitted
+      optional fields become empty strings. Unknown fields are ignored; id, user_id and timestamps cannot
+      be set by the caller. Name and VARCHAR limits apply after trimming.
+  ContactSaved:
+    type: object
+    required:
+    - message
+    - contact
+    properties:
+      message:
+        type: string
+      contact:
+        $ref: '#/definitions/Contact'
+  AuthSuccess:
+    type: object
+    required:
+    - message
+    - user
+    properties:
+      message:
+        type: string
+      user:
+        $ref: '#/definitions/User'
+  LoginInput:
+    type: object
+    required:
+    - email
+    - password
+    properties:
+      email:
+        type: string
+        format: email
+        maxLength: 254
+        description: Required valid email; trimmed.
+      password:
+        type: string
+        format: password
+        minLength: 1
+        description: Required nonempty string. Spaces are preserved; null bytes are rejected. No registration
+          length limits are imposed on login.
+      rememberMe:
+        type: boolean
+        default: false
+        description: If true, cookie expiry is extended to 30 days; server-side session lifetime is configured
+          separately.
+  RegisterInput:
+    type: object
+    required:
+    - username
+    - email
+    - password
+    properties:
+      username:
+        type: string
+        minLength: 1
+        maxLength: 50
+      email:
+        type: string
+        format: email
+        maxLength: 254
+      password:
+        type: string
+        format: password
+        minLength: 8
+        description: At least 8 Unicode characters and at most 72 UTF-8 bytes. Spaces are preserved; null
+          bytes are rejected.
+    description: Username and email are trimmed; field limits apply after trimming. All supplied fields
+      must be strings; null bytes are rejected. Unknown fields are ignored.
+  ContactReadResult:
+    type: object
+    description: 'Exactly one property is returned: contacts for list/search requests, or contact when
+      id is supplied. Swagger 2.0 cannot enforce this mutually exclusive choice; see the GET response examples
+      for the individual shapes.'
+    minProperties: 1
+    maxProperties: 1
+    additionalProperties: false
+    properties:
+      contacts:
+        type: array
+        items:
+          $ref: '#/definitions/Contact'
+      contact:
+        $ref: '#/definitions/Contact'
+responses:
+  BadRequest:
+    description: Invalid JSON object, field, or query parameter.
+    schema:
+      $ref: '#/definitions/Error'
+  Unauthorized:
+    description: Not logged in, invalid session, or incorrect login credentials.
+    schema:
+      $ref: '#/definitions/Error'
+  NotFound:
+    description: Contact does not exist or belongs to another user.
+    schema:
+      $ref: '#/definitions/Error'
+  MethodNotAllowed:
+    description: Unsupported HTTP method. Allow lists the accepted methods.
+    headers:
+      Allow:
+        description: Supported HTTP methods for the requested PHP resource.
+        type: string
+    schema:
+      $ref: '#/definitions/Error'
+  Conflict:
+    description: Username or email is already in use.
+    schema:
+      $ref: '#/definitions/Error'
+  PayloadTooLarge:
+    description: JSON request body exceeds 1,048,576 bytes.
+    schema:
+      $ref: '#/definitions/Error'
+  UnsupportedMediaType:
+    description: Content-Type must be application/json; an optional charset is accepted.
+    schema:
+      $ref: '#/definitions/Error'
+  ServerError:
+    description: Database connection failed or an unexpected internal error occurred.
+    schema:
+      $ref: '#/definitions/Error'
