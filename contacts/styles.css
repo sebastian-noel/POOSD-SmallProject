@@ -138,6 +138,8 @@ label {
 /* popup box containing the add contact form */
 .popup-content {
   width: min(100%, 420px);
+  max-height: 90vh;
+  overflow-y: auto;
   background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: 10px;

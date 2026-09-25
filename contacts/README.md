@@ -45,37 +45,64 @@ The first and last name are required & the email is required to be a real email 
 	"email": "jane@example.com",
 	"phone": "555-0100",
 	"address": "123 Main St",
-	"notes": "met at conference",
-	"date_created": "2026-09-23"
+	"notes": "met at conference"
 }
 ```
 
 ### Expected Successful Response Shape
 
 GET (list or search):
-​```json
-{ "contacts": [ { "id": 1, "first_name": "Jane", "last_name": "Doe", "email": "...", "phone": "...", "address": "...", "notes": "...", "date_created": "..." } ] }
-​```
+```json
+{ "contacts": [ { "id": 1, "first_name": "Jane", "last_name": "Doe", "email": "...", "phone": "...", "address": "...", "notes": "...", "created_at": "...", "updated_at": "..." } ] }
+```
 
 GET (one contact):
-​```json
-{ "contact": { "id": 5, "first_name": "...", "last_name": "...", "email": "...", "phone": "...", "address": "...", "notes": "...", "date_created": "..." } }
-​```
+```json
+{ "contact": { "id": 5, "first_name": "...", "last_name": "...", "email": "...", "phone": "...", "address": "...", "notes": "...", "created_at": "...", "updated_at": "..." } }
+```
 
 POST (201) / PUT (200):
-​```json
-{ "message": "Contact created", "contact": { "id": 1, "first_name": "...", "last_name": "...", "..." } }
-​```
+```json
+{ "message": "Contact created", "contact": { "id": 1, "first_name": "...", "last_name": "...", "created_at": "...", "updated_at": "..." } }
+```
 
 DELETE (200):
-​```json
+```json
 { "message": "Contact deleted" }
-​```
+```
 
 Anything that goes wrong (400 / 404 / 405):
-​```json
+```json
 { "message": "..." }
-​```
+```
+
+## Saving contacts
+
+Add and edit use the same save flow. First and last name must contain text;
+email and phone are optional. If an email is supplied, the form checks its format.
+Input length limits match the database columns. These browser checks do not
+replace validation in the API.
+
+While a save is pending, the form controls are disabled to prevent duplicate
+submissions. The popup closes and clears only after a successful response confirms
+the saved contact. Server errors, invalid responses, network failures, and a
+15-second timeout keep the entries visible for correction or retry. A successful
+save refreshes the table and displays a confirmation on the dashboard.
+
+Creation and update timestamps come from the server; they are not editable form
+fields. Contact values are rendered as text, so names containing HTML characters
+are displayed literally.
+
+Run the focused save-flow regression tests from the repository root with Node.js
+18 or newer (Node.js is only needed for these tests, not to host the application):
+
+```sh
+node --test tests/contact-save.test.cjs
+```
+
+These tests use simulated DOM elements and HTTP responses to cover input
+preservation, pending submissions, retries, and text rendering. Browser and
+PHP/MySQL integration checks are separate.
 
 ## Running the application
 
