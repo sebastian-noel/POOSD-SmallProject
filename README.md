@@ -8,7 +8,8 @@ Contact manager project for COP 4331C with Dr. Aashish Yadavally.
 - `contacts/` - contact-management page and API integration
 - `database/` - database schema, seed data, verification queries, and ERD
 - `php/README.md` - API request validation, status codes, and isolated tests
-- `docs/step-6-swaggerhub-handoff.md` - teammate handoff for the SwaggerHub spec and demo
+- `php/Openapi.yaml` - Swagger 2.0 API definition for the deployed application
+- `docs/api-demo.md` - SwaggerHub link, rehearsal evidence, and presentation script
 - `docs/aws-setup.md` - AWS architecture, verified infrastructure, and database
   teammate handoff
 
