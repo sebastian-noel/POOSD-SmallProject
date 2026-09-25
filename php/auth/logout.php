@@ -2,9 +2,7 @@
 // POST /api/auth/logout
 require_once __DIR__ . '/../auth.php';
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    json_response(405, ['message' => 'Method not allowed']);
-}
+require_method(['POST']);
 
 $_SESSION = [];
 session_destroy();

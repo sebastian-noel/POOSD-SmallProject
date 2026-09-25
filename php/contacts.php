@@ -14,6 +14,7 @@
 
 require_once __DIR__ . '/auth.php';
 
+require_method(['GET', 'POST', 'PUT', 'DELETE']);
 $userId = require_login();
 $db = get_db();
 $method = $_SERVER['REQUEST_METHOD'];
@@ -39,7 +40,7 @@ function handle_get(PDO $db, int $userId): void {
     // Single contact by id.
     if (isset($_GET['id'])) {
         $stmt = $db->prepare('SELECT * FROM contacts WHERE id = ? AND user_id = ?');
-        $stmt->execute([(int) $_GET['id'], $userId]);
+        $stmt->execute([contact_id(), $userId]);
         $contact = $stmt->fetch();
 
         if (!$contact) {
@@ -49,8 +50,8 @@ function handle_get(PDO $db, int $userId): void {
     }
 
     // Server-side search with partial matching 
-    if (isset($_GET['search']) && trim($_GET['search']) !== '') {
-        $term = trim($_GET['search']);
+    $term = string_field($_GET, 'search', 254);
+    if ($term !== '') {
         // Escape LIKE wildcard characters the user might type literally.
         $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $term);
         $like = '%' . $escaped . '%';
@@ -83,13 +84,6 @@ function handle_create(PDO $db, int $userId): void {
     $body = get_json_body();
     [$firstName, $lastName, $phone, $email, $address, $notes] = extract_contact_fields($body);
 
-    if ($firstName === '' || $lastName === '') {
-        json_response(400, ['message' => 'first_name and last_name are required']);
-    }
-    if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        json_response(400, ['message' => 'Invalid email address']);
-    }
-
     // Record today's date/time as the creation date -- set explicitly here
     // in PHP so a contact 
     // created today stores today's date, e.g. 2026-09-23 14:02:10.
@@ -109,10 +103,7 @@ function handle_create(PDO $db, int $userId): void {
 }
 
 function handle_update(PDO $db, int $userId): void {
-    if (!isset($_GET['id'])) {
-        json_response(400, ['message' => 'id is required']);
-    }
-    $id = (int) $_GET['id'];
+    $id = contact_id();
 
     // Confirm the contact exists and belongs to this user before touching it.
     $check = $db->prepare('SELECT id FROM contacts WHERE id = ? AND user_id = ?');
@@ -123,13 +114,6 @@ function handle_update(PDO $db, int $userId): void {
 
     $body = get_json_body();
     [$firstName, $lastName, $phone, $email, $address, $notes] = extract_contact_fields($body);
-
-    if ($firstName === '' || $lastName === '') {
-        json_response(400, ['message' => 'first_name and last_name are required']);
-    }
-    if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        json_response(400, ['message' => 'Invalid email address']);
-    }
 
     $stmt = $db->prepare(
         'UPDATE contacts
@@ -145,10 +129,7 @@ function handle_update(PDO $db, int $userId): void {
 }
 
 function handle_delete(PDO $db, int $userId): void {
-    if (!isset($_GET['id'])) {
-        json_response(400, ['message' => 'id is required']);
-    }
-    $id = (int) $_GET['id'];
+    $id = contact_id();
 
     $stmt = $db->prepare('DELETE FROM contacts WHERE id = ? AND user_id = ?');
     $stmt->execute([$id, $userId]);
@@ -160,12 +141,17 @@ function handle_delete(PDO $db, int $userId): void {
 }
 
 function extract_contact_fields(array $body): array {
+    $notes = string_field($body, 'notes', 65535);
+    // MySQL TEXT has a byte limit; multibyte characters still consume more bytes.
+    if (strlen($notes) > 65535) {
+        json_response(400, ['message' => 'notes must be at most 65535 bytes']);
+    }
     return [
-        trim($body['first_name'] ?? ''),
-        trim($body['last_name'] ?? ''),
-        trim($body['phone'] ?? ''),
-        trim($body['email'] ?? ''),
-        trim($body['address'] ?? ''),
-        trim($body['notes'] ?? ''),
+        string_field($body, 'first_name', 50, true),
+        string_field($body, 'last_name', 50, true),
+        string_field($body, 'phone', 20),
+        email_field($body),
+        string_field($body, 'address', 255),
+        $notes,
     ];
 }
