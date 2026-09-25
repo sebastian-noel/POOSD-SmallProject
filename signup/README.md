@@ -8,10 +8,10 @@
 
 ## API integration
 
-Update the `API_URL` in `script.js` to match your backend endpoint:
+The default URL reaches PHP on the same origin:
 
 ```js
-const API_URL = 'http://localhost:5000/api/auth/register';
+const API_URL = window.APP_CONFIG?.API_URL || '../php/auth/register.php';
 ```
 
 Matches the existing `php/auth/register.php` endpoint contract.
@@ -41,17 +41,6 @@ Expected successful response shape:
 
 On success, the page redirects to `../login/index.html`.
 
-## Run locally
-
-From this folder, start a simple web server:
-
-```bash
-python -m http.server 8001
-```
-
-Then open:
-
-```text
-http://localhost:8001
-```
-
+Serve the repository root through Apache/PHP with the configured database and
+HTTPS on the deployed domain. A static file server alone cannot execute the API.
+Registration creates the account; the user then signs in to establish a session.

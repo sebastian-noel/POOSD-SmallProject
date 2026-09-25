@@ -1,63 +1,158 @@
-const API_URL = window.APP_CONFIG?.API_URL || 'http://localhost:5000/api/contacts';
+const API_URL = window.APP_CONFIG?.API_URL || '../php/contacts.php';
+const AUTH_BASE_URL = window.APP_CONFIG?.AUTH_BASE_URL || '../php/auth';
 //most code adopted from COLORS lab, pls dont kill me :(
 
-let userName = "";
-let firstName = "";
-let lastName = "";
 let editContactId = null;
+let isSavingContact = false;
 
-function doLogout()
+async function doLogout()
 {
-	userName = "";
-	firstName = "";
-	lastName = "";
-	document.cookie = "firstName=; expires = Thu, 01 Jan 1970 00:00:00 GMT";
-	document.cookie = "lastName=; expires = Thu, 01 Jan 1970 00:00:00 GMT";
-	document.cookie = "userName=; expires = Thu, 01 Jan 1970 00:00:00 GMT";
-	window.location.href = "index.html";
-}
-
-function addContact()
-{
-	let tmp = {
-	first_name: document.getElementById("firstName").value,
-	last_name: document.getElementById("lastName").value,
-	phone: document.getElementById("contactPhone").value,
-	email: document.getElementById("contactEmail").value,
-	address: document.getElementById("contactAddress").value,
-	notes: document.getElementById("notes").value,
-	date_created: document.getElementById("dateCreated").value
-	};
-	let jsonPayload = JSON.stringify( tmp );
-	let url = API_URL;
-	
-	let xhr = new XMLHttpRequest();
-	xhr.open("POST", url, true);
-	xhr.setRequestHeader("Content-type", "application/json; charset=UTF-8");
+	const button = document.getElementById('logoutBtn');
+	button.disabled = true;
 	try
 	{
-		xhr.onreadystatechange = function() 
-		{
-			if (this.readyState == 4 && (this.status == 200 ||this.status == 201)) //changed to also include 201
-			{
-				document.getElementById("contactAddResult").innerHTML = "Contact has been added";
-				document.getElementById("contactAddResult").className = "contact-message success"; //color
-				createContacts();
-			} else if (this.readyState == 4) // added to catch error on php to be able to notify user when contact cannot be added
-			{
-				let jsonObject = JSON.parse(xhr.responseText);
-				document.getElementById("contactAddResult").innerHTML = jsonObject.message || "Error adding contact";
-				document.getElementById("contactAddResult").className = "contact-message error"; //color
-			}
-		};
-		xhr.send(jsonPayload);
+		const response = await fetch(AUTH_BASE_URL + '/logout.php', {
+			method: 'POST',
+			credentials: 'include',
+			headers: { Accept: 'application/json' },
+		});
+		if (!response.ok) throw new Error('Logout failed');
+		window.location.replace('../login/index.html');
 	}
-	catch(err)
+	catch
 	{
-		document.getElementById("contactAddResult").innerHTML = err.message;
-		document.getElementById("contactAddResult").className = "contact-message error"; //cp;pr
+		const message = document.getElementById('contactSearchResult');
+		message.textContent = 'Unable to log out. Please try again.';
+		message.className = 'contact-message error';
 	}
-	
+	finally
+	{
+		button.disabled = false;
+	}
+}
+
+async function checkSession()
+{
+	const panel = document.getElementById('contactsPanel');
+	const message = document.getElementById('sessionMessage');
+	panel.hidden = true;
+	document.getElementById('contactsTableBody').replaceChildren();
+	document.getElementById('popupOverlay').style.display = 'none';
+	message.textContent = 'Checking your session...';
+	try
+	{
+		const response = await fetch(AUTH_BASE_URL + '/me.php', {
+			credentials: 'include',
+			cache: 'no-store',
+			headers: { Accept: 'application/json' },
+		});
+		if (response.status === 401)
+		{
+			window.location.replace('../login/index.html');
+			return false;
+		}
+		if (!response.ok) throw new Error('Session check failed');
+		const data = await response.json();
+		if (!data.user?.id) throw new Error('Missing user');
+		message.textContent = '';
+		panel.hidden = false;
+		return true;
+	}
+	catch
+	{
+		message.textContent = 'Unable to check your session. Reload the page to try again.';
+		message.className = 'contact-message error';
+		return false;
+	}
+}
+
+function setContactSaveMessage(text)
+{
+	const message = document.getElementById('contactAddResult');
+	message.textContent = text;
+	message.className = text ? 'contact-message error' : 'contact-message';
+}
+
+function setContactSaving(saving)
+{
+	isSavingContact = saving;
+	const form = document.getElementById('contactForm');
+	for (const control of form.elements) control.disabled = saving;
+	form.setAttribute('aria-busy', String(saving));
+	document.getElementById('saveContactBtn').textContent = saving ? 'Saving...' : 'Save Contact';
+}
+
+function saveContact(id)
+{
+	if (isSavingContact) return;
+	const form = document.getElementById('contactForm');
+	setContactSaveMessage('');
+	if (!form.reportValidity()) return;
+	const contact = {
+		first_name: document.getElementById('firstName').value.trim(),
+		last_name: document.getElementById('lastName').value.trim(),
+		phone: document.getElementById('contactPhone').value.trim(),
+		email: document.getElementById('contactEmail').value.trim(),
+		address: document.getElementById('contactAddress').value.trim(),
+		notes: document.getElementById('notes').value.trim(),
+	};
+	if (!contact.first_name || !contact.last_name)
+	{
+		setContactSaveMessage('First and last name are required.');
+		return;
+	}
+
+	setContactSaving(true);
+	const fail = message => {
+		setContactSaving(false);
+		setContactSaveMessage(message);
+	};
+	const xhr = new XMLHttpRequest();
+	xhr.onload = function()
+	{
+		let data;
+		try { data = JSON.parse(xhr.responseText); }
+		catch
+		{
+			fail('Unexpected response from the server. Your entries have been kept.');
+			return;
+		}
+		if (xhr.status !== (id === null ? 201 : 200))
+		{
+			fail(typeof data?.message === 'string' ? data.message : 'Unable to save this contact. Please try again.');
+			return;
+		}
+		if (!data?.contact?.id)
+		{
+			fail('The server did not confirm the saved contact. Your entries have been kept.');
+			return;
+		}
+
+		setContactSaving(false);
+		editContactId = null;
+		form.reset();
+		document.getElementById('popupOverlay').style.display = 'none';
+		const message = document.getElementById('contactSearchResult');
+		message.textContent = id === null ? 'Contact has been added.' : 'Contact has been updated.';
+		message.className = 'contact-message success';
+		createContacts();
+		document.getElementById('addContactBtn').focus();
+	};
+	xhr.onerror = () => fail('Unable to reach the server. Your entries have been kept.');
+	xhr.ontimeout = () => fail('The save request timed out. Your entries have been kept.');
+	xhr.onabort = () => fail('The save request was interrupted. Your entries have been kept.');
+	try
+	{
+		xhr.open(id === null ? 'POST' : 'PUT', id === null ? API_URL : API_URL + '?id=' + encodeURIComponent(id), true);
+		xhr.withCredentials = true;
+		xhr.timeout = 15000;
+		xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+		xhr.send(JSON.stringify(contact));
+	}
+	catch
+	{
+		fail('Unable to send this contact. Your entries have been kept.');
+	}
 }
 
 
@@ -109,18 +204,41 @@ function createContacts()
 function loadContacts(contacts)
 {
 	let body = document.getElementById("contactsTableBody");
-	body.innerHTML="";
+	body.replaceChildren();
 
 	if (!contacts||contacts.length===0)
 	{
-		body.innerHTML ="<tr><td colspan=\"5\">No contacts found</td></tr>";
+		const row = document.createElement('tr');
+		const cell = document.createElement('td');
+		cell.colSpan = 5;
+		cell.textContent = 'No contacts found';
+		row.appendChild(cell);
+		body.appendChild(row);
 		return;
 	}
 	contacts.forEach(function(contact)
 	{
-	let r = document.createElement("tr");
-	r.innerHTML = "<td>" + contact.first_name + " " + contact.last_name + "</td>" + "<td>" + contact.email + "</td>" + "<td>" + contact.phone + "</td>" + "<td>" + (contact.date_created || "") + "</td>" +"<td>" + "<button class=\"secondary-btn\" type=\"button\" data-id=\"" + contact.id + "\">Edit</button> " +"<button class=\"btn-delete\" type=\"button\" data-id=\"" + contact.id + "\">Delete</button>" + "</td>";
-	body.appendChild(r);
+		const row = document.createElement('tr');
+		const values = [contact.first_name + ' ' + contact.last_name, contact.email,
+			contact.phone, (contact.created_at || '').slice(0, 10)];
+		for (const value of values)
+		{
+			const cell = document.createElement('td');
+			cell.textContent = value || '';
+			row.appendChild(cell);
+		}
+		const actions = document.createElement('td');
+		for (const [label, className] of [['Edit', 'secondary-btn'], ['Delete', 'btn-delete']])
+		{
+			const button = document.createElement('button');
+			button.type = 'button';
+			button.className = className;
+			button.dataset.id = contact.id;
+			button.textContent = label;
+			actions.append(button, ' ');
+		}
+		row.appendChild(actions);
+		body.appendChild(row);
 	});
 }
 
@@ -147,6 +265,8 @@ function deleteContact(id)
 
 function editContact(contact)
 {
+	if (isSavingContact) return;
+	setContactSaveMessage('');
 	editContactId = contact.id;
 	document.getElementById("firstName").value = contact.first_name || "";
 	document.getElementById("lastName").value = contact.last_name || "";
@@ -154,50 +274,8 @@ function editContact(contact)
 	document.getElementById("contactPhone").value = contact.phone || "";
 	document.getElementById("contactAddress").value = contact.address || "";
 	document.getElementById("notes").value = contact.notes || "";
-	document.getElementById("dateCreated").value = contact.date_created || "";
-	document.getElementById("popupTitle").innerHTML = "Edit Contact";
+	document.getElementById("popupTitle").textContent = "Edit Contact";
 	document.getElementById("popupOverlay").style.display = "grid";
-}
-function updateContact(id)
-{
-	let tmp = {
-	first_name: document.getElementById("firstName").value,
-	last_name: document.getElementById("lastName").value,
-	phone: document.getElementById("contactPhone").value,
-	email: document.getElementById("contactEmail").value,
-	address: document.getElementById("contactAddress").value,
-	notes: document.getElementById("notes").value,
-	date_created: document.getElementById("dateCreated").value
-	};
-	let jsonPayload = JSON.stringify( tmp );
-
-	let xhr = new XMLHttpRequest();
-	xhr.open("PUT", API_URL + '?id=' + id, true);
-	xhr.setRequestHeader("Content-type", "application/json; charset=UTF-8");
-	try
-	{
-		xhr.onreadystatechange = function()
-		{
-			if (this.readyState == 4 && this.status == 200)
-			{
-				document.getElementById("contactAddResult").innerHTML = "Contact has been updated";
-				document.getElementById("contactAddResult").className = "contact-message success";
-				createContacts();
-			}
-			else if (this.readyState == 4)
-			{
-				let jsonObject = JSON.parse(xhr.responseText);
-				document.getElementById("contactAddResult").innerHTML = jsonObject.message || "Error updating contact";
-				document.getElementById("contactAddResult").className = "contact-message error";
-			}
-		};
-		xhr.send(jsonPayload);
-	}
-	catch(err)
-	{
-		document.getElementById("contactAddResult").innerHTML = err.message;
-		document.getElementById("contactAddResult").className = "contact-message error";
-	}
 }
 
 function fetchContactForEdit(id)
@@ -215,7 +293,7 @@ function fetchContactForEdit(id)
 	xhr.send();
 }
 
-document.addEventListener("DOMContentLoaded", function ()
+document.addEventListener("DOMContentLoaded", async function ()
 {
 	let overlay = document.getElementById("popupOverlay");
 	let addBtn = document.getElementById("addContactBtn");
@@ -243,14 +321,17 @@ document.addEventListener("DOMContentLoaded", function ()
 	});
 	addBtn.addEventListener("click", function()
 	{
+		if (isSavingContact) return;
+		setContactSaveMessage('');
 		editContactId = null;
 		form.reset();
-		document.getElementById("popupTitle").innerHTML = "Add Contact";
+		document.getElementById("popupTitle").textContent = "Add Contact";
 		overlay.style.display = "grid";
 	});
  
 	closeBtn.addEventListener("click", function()
 	{
+		if (isSavingContact) return;
 		editContactId = null;
 		overlay.style.display = "none";
 	});
@@ -258,17 +339,7 @@ document.addEventListener("DOMContentLoaded", function ()
 	form.addEventListener("submit", function(event)
 	{
 		event.preventDefault();
-		if (editContactId)
-		{
-			updateContact(editContactId);
-		}
-		else
-		{
-			addContact();
-		}
-		editContactId = null;
-		overlay.style.display = "none";
-		form.reset();
+		saveContact(editContactId);
 	});
  
 	searchBox.addEventListener("keydown", function(event)
@@ -281,5 +352,11 @@ document.addEventListener("DOMContentLoaded", function ()
 	let logoutBtn = document.getElementById("logoutBtn");
 	logoutBtn.addEventListener("click", doLogout);
  
-	createContacts();
+	if (await checkSession()) createContacts();
+});
+
+// A page restored with Back/Forward must check the session again before showing data.
+window.addEventListener('pageshow', async function(event)
+{
+	if (event.persisted && await checkSession()) createContacts();
 });
