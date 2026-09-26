@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Contact Manager — Sign up</title>
+    <!-- Inter font from Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -12,9 +13,11 @@
   <body>
     <main class="page-shell">
       <section class="login-panel" aria-label="Sign up panel">
+        <!-- Page title -->
         <h1>Contact Manager</h1>
         <p class="subtitle">Create an account to manage your contacts</p>
 
+        <!-- Signup form; handled in script.js -->
         <form id="signupForm" class="login-form" novalidate>
           <div class="field-group">
             <label for="username">Username</label>
@@ -35,9 +38,11 @@
             <span class="btn-text">Create account</span>
           </button>
 
+          <!-- Filled in by script.js with success or error messages -->
           <div id="formMessage" class="form-message" role="alert" aria-live="polite"></div>
         </form>
 
+        <!-- Link to the other auth page -->
         <p class="signup-link">
           Already have an account?
           <a href="../login/index.html">Log in</a>

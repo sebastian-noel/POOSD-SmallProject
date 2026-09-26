@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Contact Manager — Log in</title>
+    <!-- Inter font from Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -12,9 +13,11 @@
   <body>
     <main class="page-shell">
       <section class="login-panel" aria-label="Login panel">
+        <!-- Page title -->
         <h1>Contact Manager</h1>
         <p class="subtitle">Log in to manage your contacts</p>
 
+        <!-- Login form; handled in script.js -->
         <form id="loginForm" class="login-form" novalidate>
           <div class="field-group">
             <label for="email">Email</label>
@@ -26,21 +29,15 @@
             <input id="password" name="password" type="password" placeholder="Enter your password" autocomplete="current-password" required />
           </div>
 
-          <div class="meta-row">
-            <label class="remember-me" for="rememberMe">
-              <input id="rememberMe" type="checkbox" />
-              <span>Remember me</span>
-            </label>
-            <a href="#" class="link-text">Forgot password?</a>
-          </div>
-
           <button type="submit" class="primary-btn" id="submitButton">
             <span class="btn-text">Sign in</span>
           </button>
 
+          <!-- Filled in by script.js with success or error messages -->
           <div id="formMessage" class="form-message" role="alert" aria-live="polite"></div>
         </form>
 
+        <!-- Link to the other auth page -->
         <p class="signup-link">
           Don’t have an account?
           <a href="../signup/index.html">Create account</a>

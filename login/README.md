@@ -19,8 +19,7 @@ Expected request body:
 ```json
 {
   "email": "user@example.com",
-  "password": "yourPassword123",
-  "rememberMe": true
+  "password": "yourPassword123"
 }
 ```
 
