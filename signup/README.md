@@ -21,7 +21,6 @@ Expected request body:
 ```json
 {
   "username": "yourusername",
-  "email": "user@example.com",
   "password": "yourPassword123"
 }
 ```
@@ -33,8 +32,7 @@ Expected successful response shape:
   "message": "Account created",
   "user": {
     "id": 1,
-    "username": "yourusername",
-    "email": "user@example.com"
+    "username": "yourusername"
   }
 }
 ```

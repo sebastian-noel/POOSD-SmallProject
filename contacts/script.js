@@ -93,8 +93,6 @@ function addContact()
 		last_name: document.getElementById('lastName').value.trim(),
 		phone: document.getElementById('contactPhone').value.trim(),
 		email: document.getElementById('contactEmail').value.trim(),
-		address: document.getElementById('contactAddress').value.trim(),
-		notes: document.getElementById('notes').value.trim(),
 	};
 	if (!contact.first_name || !contact.last_name)
 	{
@@ -272,8 +270,6 @@ function editContact(contact)
 	document.getElementById("lastName").value = contact.last_name || "";
 	document.getElementById("contactEmail").value = contact.email || "";
 	document.getElementById("contactPhone").value = contact.phone || "";
-	document.getElementById("contactAddress").value = contact.address || "";
-	document.getElementById("notes").value = contact.notes || "";
 	document.getElementById("popupTitle").textContent = "Edit Contact";
 	document.getElementById("popupOverlay").style.display = "grid";
 }
@@ -289,8 +285,6 @@ function updateContact(id)
 		last_name: document.getElementById('lastName').value.trim(),
 		phone: document.getElementById('contactPhone').value.trim(),
 		email: document.getElementById('contactEmail').value.trim(),
-		address: document.getElementById('contactAddress').value.trim(),
-		notes: document.getElementById('notes').value.trim(),
 	};
 	if (!contact.first_name || !contact.last_name)
 	{

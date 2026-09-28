@@ -20,17 +20,14 @@ bytes. Character limits count Unicode characters; byte limits count UTF-8 bytes.
 
 | Field | Rule |
 | --- | --- |
-| Registration username | Required, at most 50 characters |
-| Registration/login email | Required, valid email, at most 254 characters |
+| Registration/login username | Required, at most 50 characters |
 | Registration password | At least 8 characters, at most 72 bytes; spaces are preserved; no null bytes |
 | Login password | Required nonempty string; spaces are preserved; no null bytes |
 | Login rememberMe | Optional JSON boolean, defaults to false |
 | Contact first_name / last_name | Required for POST and PUT, at most 50 characters each |
-| Contact email | Optional; valid email when nonempty, at most 254 characters |
+| Contact email | Optional; valid email when nonempty, at most 60 characters |
 | Contact phone | Optional string, at most 20 characters; no numeric coercion |
-| Contact address | Optional string, at most 255 characters |
-| Contact notes | Optional string, at most 65,535 bytes (MySQL TEXT) |
-| Contact id query parameter | Decimal integer 1–4,294,967,295, no signs, spaces, leading zeros, fractions, or arrays |
+| Contact id query parameter | Decimal integer 1–2,147,483,647, no signs, spaces, leading zeros, fractions, or arrays |
 | Contact search query parameter | Optional string, at most 254 characters; blank returns the user's list |
 
 PUT replaces all editable fields; omitted optional fields become empty strings.
@@ -52,7 +49,7 @@ new signup length rules. See the [PHP password_hash documentation](https://www.p
 | 401 | Missing/invalid login session or incorrect credentials |
 | 404 | Contact missing or belongs to another user |
 | 405 | Unsupported method; the Allow header names accepted methods |
-| 409 | Username or email already used, including a duplicate-key insert race |
+| 409 | Username already used, including a duplicate-key insert race |
 | 413 | Request body exceeds 1 MiB |
 | 415 | Missing or unsupported Content-Type on an endpoint that reads a body |
 | 500 | Database/runtime failure, with no SQL or stack trace in the response |
@@ -70,9 +67,10 @@ With Docker running and Node.js 22 or newer installed, run from the repo root:
 bash tests/run-api-validation.sh
 ```
 
-The runner creates disposable MySQL 8.4 and PHP 8.3 containers, imports the schema
-and test-only error triggers, and runs HTTP assertions. It mounts only `php/`,
-so a real `.env` cannot redirect tests to another database. The containers and
+The runner creates disposable MySQL 8.4 and PHP 8.3 containers, imports the schema,
+demo fixtures, and test-only error triggers, and runs HTTP assertions. App
+directories are mounted individually, so a real `.env` cannot redirect tests to
+another database. The containers and
 network are removed on exit. No application server or production database is
 needed. The first run may download images and compile the PDO MySQL extension.
 
@@ -80,3 +78,30 @@ Tests cover field types and limits, malformed requests, method/status headers,
 partial search, contact ownership, failed updates, and generic database errors.
 The duplicate-key fixture deterministically exercises the insert error path; it
 does not simulate the timing of two concurrent registrations.
+
+Run `node --test tests/contact-save.test.cjs` for contact form regressions and
+`bash tests/run-schema-migration.sh` for the non-destructive database-copy tests.
+With Playwright installed and Chromium available, set `API_TEST_BROWSER=1` when
+running the API runner to include the real-browser signup/login/CRUD/search/logout
+flow. `PLAYWRIGHT_CHANNEL=chrome` uses an installed Chrome instead of Playwright's
+bundled Chromium. The browser helper accepts only the disposable loopback URL.
+
+## Original ERD contract
+
+Accounts contain no email. Register/login with `{ "username": "Huey", "password": "..." }`.
+User responses contain `id` and `username`; password hashes are never returned.
+Contacts contain only the eight ERD fields. SQL `users.userID` and
+`contacts.UserID` are exposed as JSON `user.id` and `contact.user_id` to keep
+the frontend ID contract stable. Contact email is limited to 60 characters.
+See [the deployment transition](../docs/original-erd-transition.md) before
+switching an existing server; old-schema databases are not compatible.
+
+## Local preview sessions
+
+`scripts/preview.sh` sets `CONTACT_MANAGER_LOCAL_PREVIEW=1` for its loopback-only
+PHP development server. Only that explicit flag together with PHP's `cli-server`
+SAPI, a loopback Host header, and HTTP enables `POOSD_PREVIEW_SESSION` without
+Secure. HttpOnly and SameSite=Lax remain enabled. This permits browsers that
+reject Secure cookies on plain HTTP loopback to retain the login session.
+Default deployments, Apache, HTTPS, and non-loopback hosts keep Secure PHPSESSID
+cookies. Remember-me and logout use the same cookie settings as session creation.

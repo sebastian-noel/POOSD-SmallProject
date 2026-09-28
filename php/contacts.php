@@ -39,7 +39,7 @@ switch ($method) {
 function handle_get(PDO $db, int $userId): void {
     // Single contact by id.
     if (isset($_GET['id'])) {
-        $stmt = $db->prepare('SELECT * FROM contacts WHERE id = ? AND user_id = ?');
+        $stmt = $db->prepare('SELECT id, UserID AS user_id, first_name, last_name, email, phone, created_at, updated_at FROM contacts WHERE id = ? AND UserID = ?');
         $stmt->execute([contact_id(), $userId]);
         $contact = $stmt->fetch();
 
@@ -60,8 +60,8 @@ function handle_get(PDO $db, int $userId): void {
         // native MySQL prepares (EMULATE_PREPARES = false) throw "Invalid
         // parameter number" if the same named placeholder is reused.
         $stmt = $db->prepare(
-            "SELECT * FROM contacts
-             WHERE user_id = ?
+            "SELECT id, UserID AS user_id, first_name, last_name, email, phone, created_at, updated_at FROM contacts
+             WHERE UserID = ?
                AND (first_name LIKE ? ESCAPE '\\\\'
                  OR last_name  LIKE ? ESCAPE '\\\\'
                  OR email      LIKE ? ESCAPE '\\\\'
@@ -74,7 +74,7 @@ function handle_get(PDO $db, int $userId): void {
 
     // No id, no search -> full list for this user.
     $stmt = $db->prepare(
-        'SELECT * FROM contacts WHERE user_id = ? ORDER BY last_name, first_name'
+        'SELECT id, UserID AS user_id, first_name, last_name, email, phone, created_at, updated_at FROM contacts WHERE UserID = ? ORDER BY last_name, first_name'
     );
     $stmt->execute([$userId]);
     json_response(200, ['contacts' => $stmt->fetchAll()]);
@@ -82,7 +82,7 @@ function handle_get(PDO $db, int $userId): void {
 
 function handle_create(PDO $db, int $userId): void {
     $body = get_json_body();
-    [$firstName, $lastName, $phone, $email, $address, $notes] = extract_contact_fields($body);
+    [$firstName, $lastName, $phone, $email] = extract_contact_fields($body);
 
     // Record today's date/time as the creation date -- set explicitly here
     // in PHP so a contact 
@@ -90,13 +90,13 @@ function handle_create(PDO $db, int $userId): void {
     $createdAt = date('Y-m-d H:i:s');
 
     $stmt = $db->prepare(
-        'INSERT INTO contacts (user_id, first_name, last_name, phone, email, address, notes, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+        'INSERT INTO contacts (UserID, first_name, last_name, phone, email, created_at)
+         VALUES (?, ?, ?, ?, ?, ?)'
     );
-    $stmt->execute([$userId, $firstName, $lastName, $phone, $email, $address, $notes, $createdAt]);
+    $stmt->execute([$userId, $firstName, $lastName, $phone, $email, $createdAt]);
 
     $id = (int) $db->lastInsertId();
-    $stmt = $db->prepare('SELECT * FROM contacts WHERE id = ?');
+    $stmt = $db->prepare('SELECT id, UserID AS user_id, first_name, last_name, email, phone, created_at, updated_at FROM contacts WHERE id = ?');
     $stmt->execute([$id]);
 
     json_response(201, ['message' => 'Contact created', 'contact' => $stmt->fetch()]);
@@ -106,23 +106,23 @@ function handle_update(PDO $db, int $userId): void {
     $id = contact_id();
 
     // Confirm the contact exists and belongs to this user before touching it.
-    $check = $db->prepare('SELECT id FROM contacts WHERE id = ? AND user_id = ?');
+    $check = $db->prepare('SELECT id FROM contacts WHERE id = ? AND UserID = ?');
     $check->execute([$id, $userId]);
     if (!$check->fetch()) {
         json_response(404, ['message' => 'Contact not found']);
     }
 
     $body = get_json_body();
-    [$firstName, $lastName, $phone, $email, $address, $notes] = extract_contact_fields($body);
+    [$firstName, $lastName, $phone, $email] = extract_contact_fields($body);
 
     $stmt = $db->prepare(
         'UPDATE contacts
-         SET first_name = ?, last_name = ?, phone = ?, email = ?, address = ?, notes = ?
-         WHERE id = ? AND user_id = ?'
+         SET first_name = ?, last_name = ?, phone = ?, email = ?
+         WHERE id = ? AND UserID = ?'
     );
-    $stmt->execute([$firstName, $lastName, $phone, $email, $address, $notes, $id, $userId]);
+    $stmt->execute([$firstName, $lastName, $phone, $email, $id, $userId]);
 
-    $stmt = $db->prepare('SELECT * FROM contacts WHERE id = ?');
+    $stmt = $db->prepare('SELECT id, UserID AS user_id, first_name, last_name, email, phone, created_at, updated_at FROM contacts WHERE id = ?');
     $stmt->execute([$id]);
 
     json_response(200, ['message' => 'Contact updated', 'contact' => $stmt->fetch()]);
@@ -131,7 +131,7 @@ function handle_update(PDO $db, int $userId): void {
 function handle_delete(PDO $db, int $userId): void {
     $id = contact_id();
 
-    $stmt = $db->prepare('DELETE FROM contacts WHERE id = ? AND user_id = ?');
+    $stmt = $db->prepare('DELETE FROM contacts WHERE id = ? AND UserID = ?');
     $stmt->execute([$id, $userId]);
 
     if ($stmt->rowCount() === 0) {
@@ -141,17 +141,10 @@ function handle_delete(PDO $db, int $userId): void {
 }
 
 function extract_contact_fields(array $body): array {
-    $notes = string_field($body, 'notes', 65535);
-    // MySQL TEXT has a byte limit; multibyte characters still consume more bytes.
-    if (strlen($notes) > 65535) {
-        json_response(400, ['message' => 'notes must be at most 65535 bytes']);
-    }
     return [
         string_field($body, 'first_name', 50, true),
         string_field($body, 'last_name', 50, true),
         string_field($body, 'phone', 20),
         email_field($body),
-        string_field($body, 'address', 255),
-        $notes,
     ];
 }

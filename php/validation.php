@@ -34,7 +34,7 @@ function string_field(array $source, string $field, int $maxLength, bool $requir
 }
 
 function email_field(array $body, bool $required = false): string {
-    $email = string_field($body, 'email', 254, $required);
+    $email = string_field($body, 'email', 60, $required);
     if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         json_response(400, ['message' => 'Invalid email address']);
     }
@@ -69,8 +69,8 @@ function contact_id(): int {
     if ($id === null) {
         json_response(400, ['message' => 'id is required']);
     }
-    if (!is_string($id) || !preg_match('/^[1-9][0-9]{0,9}$/D', $id) || (int) $id > 4294967295) {
-        json_response(400, ['message' => 'id must be a positive integer from 1 to 4294967295']);
+    if (!is_string($id) || !preg_match('/^[1-9][0-9]{0,9}$/D', $id) || (int) $id > 2147483647) {
+        json_response(400, ['message' => 'id must be a positive integer from 1 to 2147483647']);
     }
     return (int) $id;
 }

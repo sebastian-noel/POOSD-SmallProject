@@ -43,9 +43,7 @@ The first and last name are required & the email is required to be a real email 
 	"first_name": "Jane",
 	"last_name": "Doe",
 	"email": "jane@example.com",
-	"phone": "555-0100",
-	"address": "123 Main St",
-	"notes": "met at conference"
+	"phone": "555-0100"
 }
 ```
 
@@ -53,12 +51,12 @@ The first and last name are required & the email is required to be a real email 
 
 GET (list or search):
 ```json
-{ "contacts": [ { "id": 1, "first_name": "Jane", "last_name": "Doe", "email": "...", "phone": "...", "address": "...", "notes": "...", "created_at": "...", "updated_at": "..." } ] }
+{ "contacts": [ { "id": 1, "first_name": "Jane", "last_name": "Doe", "email": "...", "phone": "...", "created_at": "...", "updated_at": "..." } ] }
 ```
 
 GET (one contact):
 ```json
-{ "contact": { "id": 5, "first_name": "...", "last_name": "...", "email": "...", "phone": "...", "address": "...", "notes": "...", "created_at": "...", "updated_at": "..." } }
+{ "contact": { "id": 5, "first_name": "...", "last_name": "...", "email": "...", "phone": "...", "created_at": "...", "updated_at": "..." } }
 ```
 
 POST (201) / PUT (200):
@@ -113,3 +111,6 @@ PHP/MySQL integration checks are separate.
 Serve the repository root through Apache/PHP with the configured database. Open
 the domain root to log in or register. A static file server alone cannot execute
 the API; use HTTPS on the deployed domain for the Secure session cookie.
+
+The original ERD contract accepts only first/last name, contact email (maximum
+60 characters), and phone. Address and notes are no longer form/API fields.

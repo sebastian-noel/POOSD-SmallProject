@@ -1,6 +1,10 @@
 # AWS Infrastructure and Database Handoff
 
-Last verified: September 20, 2026
+Infrastructure last verified: September 20, 2026
+
+For the original-ERD revision, follow [the transition handoff](original-erd-transition.md)
+before deploying. Existing databases need the copy/cutover workflow, not a rerun
+of CREATE TABLE IF NOT EXISTS.
 
 ## Ownership
 
@@ -124,8 +128,8 @@ Create `users` before `contacts`.
 The `users` table needs at least:
 
 ```text
-id
-username or email
+userID
+username
 password_hash
 created_at
 ```
@@ -134,7 +138,7 @@ The `contacts` table needs at least:
 
 ```text
 id
-user_id
+UserID
 first_name
 last_name
 email
@@ -146,8 +150,8 @@ updated_at
 Schema requirements:
 
 - Give both tables primary keys.
-- Make `contacts.user_id` a foreign key referencing `users.id`.
-- Use appropriate `BIGINT`, `VARCHAR`, and `TIMESTAMP` types.
+- Make `contacts.UserID` a foreign key referencing `users.userID`.
+- Use the ERD's `INT`, `VARCHAR`, and `TIMESTAMP` types.
 - Add an index that supports retrieving a user's contacts by name.
 - Make the password-hash column large enough for PHP password hashes.
 - Prefer `CREATE TABLE IF NOT EXISTS` for repeatable setup.
@@ -168,10 +172,10 @@ SHOW TABLES;
 DESCRIBE users;
 DESCRIBE contacts;
 
-SELECT * FROM users;
+SELECT userID, username, created_at FROM users;
 SELECT * FROM contacts;
 
-SELECT * FROM users WHERE id = 1;
+SELECT userID, username, created_at FROM users WHERE userID = 1;
 SELECT * FROM contacts WHERE id = 1;
 ```
 
@@ -180,7 +184,7 @@ Also verify partial, case-insensitive first-name and last-name search:
 ```sql
 SELECT *
 FROM contacts
-WHERE user_id = 1
+WHERE UserID = 1
   AND (
     LOWER(first_name) LIKE '%jo%'
     OR LOWER(last_name) LIKE '%jo%'
@@ -195,7 +199,7 @@ directly into this query.
 The ERD must match `schema.sql` and show this one-to-many relationship:
 
 ```text
-users.id  1 -------- many  contacts.user_id
+users.userID  1 -------- many  contacts.UserID
 ```
 
 ### 7. Commit the database work

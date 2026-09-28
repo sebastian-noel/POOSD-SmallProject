@@ -22,7 +22,7 @@ function fixture() {
             focus() { this.focused = true; },
         };
     }
-    const fields = ['firstName', 'lastName', 'contactEmail', 'contactPhone', 'contactAddress', 'notes'];
+    const fields = ['firstName', 'lastName', 'contactEmail', 'contactPhone'];
     const ids = [...fields, 'contactForm', 'contactAddResult', 'saveContactBtn',
         'closePopupBtn', 'popupOverlay', 'popupTitle', 'contactSearchResult', 'addContactBtn', 'contactsTableBody',
         'searchBox', 'logoutBtn'];
@@ -33,7 +33,7 @@ function fixture() {
     form.reset = () => { for (const id of fields) elements[id].value = ''; };
     elements.firstName.value = ' Jane ';
     elements.lastName.value = ' Doe ';
-    elements.notes.value = 'Keep these notes';
+    elements.contactPhone.value = '407-555-0100';
     elements.popupOverlay.style.display = 'grid';
     const requests = [];
     class Request {
@@ -65,7 +65,7 @@ function assertPreserved(f) {
     assert.equal(f.elements.popupOverlay.style.display, 'grid');
     assert.equal(f.elements.firstName.value, ' Jane ');
     assert.equal(f.elements.lastName.value, ' Doe ');
-    assert.equal(f.elements.notes.value, 'Keep these notes');
+    assert.equal(f.elements.contactPhone.value, '407-555-0100');
     assert.ok(f.form.elements.every(control => !control.disabled));
     assert.equal(f.elements.saveContactBtn.textContent, 'Save Contact');
     assert.ok(f.elements.contactAddResult.textContent);
@@ -98,7 +98,7 @@ test('pending saves disable controls and duplicate submissions; success resets a
     assert.equal(request.timeout, 15000);
     assert.equal(request.withCredentials, true);
     assert.deepEqual(JSON.parse(request.body), {
-        first_name: 'Jane', last_name: 'Doe', email: '', phone: '', address: '', notes: 'Keep these notes',
+        first_name: 'Jane', last_name: 'Doe', email: '', phone: '407-555-0100',
     });
     request.respond(201, { contact: { id: 6 } });
     assert.equal(f.elements.popupOverlay.style.display, 'none');
@@ -165,7 +165,7 @@ test('a synchronous send failure restores the form', () => {
 
 test('failed edits keep the selected contact for a PUT retry', () => {
     const f = fixture();
-    f.context.editContact({ id: 42, first_name: ' Jane ', last_name: ' Doe ', notes: 'Keep these notes' });
+    f.context.editContact({ id: 42, first_name: ' Jane ', last_name: ' Doe ', phone: '407-555-0100' });
     vm.runInContext('updateContact(editContactId);', f.context);
     f.context.editContact({ id: 99, first_name: 'Another', last_name: 'Contact' });
     assert.equal(f.elements.firstName.value, ' Jane '); // Cannot switch contacts mid-save.

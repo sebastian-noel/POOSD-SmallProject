@@ -1,17 +1,19 @@
-# Presentation: login in SwaggerHub, then search in the web application.
+# Presentation: username login in SwaggerHub, then search in the web application.
 swagger: '2.0'
 info:
   title: Personal Contact Manager API
-  version: 1.0.0
-  description: 'PHP/MySQL API for private, per-user contacts. Demonstrate only POST /auth/login.php in SwaggerHub.
-    Show search in the web application; other operations are reference documentation. JSON object bodies are limited to
-    1,048,576 bytes and require Content-Type: application/json. All errors contain message. Text fields
-    reject null bytes and invalid types; unknown body fields are ignored. Contact operations require authentication
-    before body/query validation. See docs/api-demo.md for the presentation script and rehearsal evidence.
-    This definition matches the PHP request validation implementation. Protected
-    operations require the PHPSESSID cookie issued by login. Swagger 2.0 cannot model cookie authentication
-    natively; session requirements are documented in descriptions and x-session-required, which does not
-    configure request routing.'
+  version: 2.0.0
+  description: 'Username/password accounts and contacts matching the original ERD. PHP/MySQL API for private,
+    per-user contacts. Demonstrate only POST /auth/login.php in SwaggerHub. Show search in the web application;
+    other operations are reference documentation. JSON object bodies are limited to 1,048,576 bytes and
+    require Content-Type: application/json. All errors contain message. Text fields reject null bytes and
+    invalid types; unknown body fields are ignored. Contact operations require authentication before body/query
+    validation. See docs/api-demo.md for the presentation script and rehearsal evidence. This definition
+    matches the PHP request validation implementation. Protected operations require the PHPSESSID cookie
+    issued by login. Swagger 2.0 cannot model cookie authentication natively; session requirements are documented
+    in descriptions and x-session-required, which does not configure request routing. Version 2.0.0 requires
+    the original-ERD database transition before deployment; it is not the previously published 1.0.0 email-login
+    contract.'
 host: contacts.snoel.dev
 basePath: /php
 schemes:
@@ -50,7 +52,6 @@ paths:
               user:
                 id: 1
                 username: DemoUser
-                email: demo@example.com
         '400':
           $ref: '#/responses/BadRequest'
         '401':
@@ -78,8 +79,8 @@ paths:
       - Contacts
       responses:
         '200':
-          description: 'Without id: contacts array, including an empty array for no matches. With id:
-            one contact object.'
+          description: 'Without id: contacts array, including an empty array for no matches. With id: one
+            contact object.'
           schema:
             $ref: '#/definitions/ContactReadResult'
           examples:
@@ -91,8 +92,6 @@ paths:
                 last_name: Jones
                 phone: 407-555-0134
                 email: joanna@example.com
-                address: 123 Example Street
-                notes: null
                 created_at: '2026-09-24 14:00:00'
                 updated_at: '2026-09-24 14:00:00'
           x-response-examples:
@@ -104,8 +103,6 @@ paths:
                 last_name: Jones
                 phone: 407-555-0134
                 email: joanna@example.com
-                address: 123 Example Street
-                notes: null
                 created_at: '2026-09-24 14:00:00'
                 updated_at: '2026-09-24 14:00:00'
             noMatches:
@@ -118,8 +115,6 @@ paths:
                 last_name: Jones
                 phone: 407-555-0134
                 email: joanna@example.com
-                address: 123 Example Street
-                notes: null
                 created_at: '2026-09-24 14:00:00'
                 updated_at: '2026-09-24 14:00:00'
         '400':
@@ -133,11 +128,10 @@ paths:
         '500':
           $ref: '#/responses/ServerError'
       description: Requires an authenticated PHPSESSID session cookie from login. Search runs on the server
-        against first_name, last_name, email, and phone using a prepared SQL substring match. Percent
-        signs, underscores and backslashes are escaped as literals. Results belong only to the session
-        user and are ordered by last_name, first_name. Blank or absent search returns the user's list.
-        id takes precedence over search and returns a single contact. The supplied database schema uses
-        a case-insensitive collation.
+        against first_name, last_name, email, and phone using a prepared SQL substring match. Percent signs,
+        underscores and backslashes are escaped as literals. Results belong only to the session user and
+        are ordered by last_name, first_name. Blank or absent search returns the user's list. id takes precedence
+        over search and returns a single contact. The supplied database schema uses a case-insensitive collation.
       parameters:
       - name: search
         in: query
@@ -148,12 +142,11 @@ paths:
       - name: id
         in: query
         required: false
-        description: Decimal integer 1–4294967295. No signs, whitespace, leading zeros, fractions, or
-          arrays.
+        description: Decimal integer 1–2147483647. No signs, whitespace, leading zeros, fractions, or arrays.
         type: integer
         format: int64
         minimum: 1
-        maximum: 4294967295
+        maximum: 2147483647
       x-session-required: true
     post:
       operationId: createContact
@@ -175,8 +168,6 @@ paths:
                 last_name: Jones
                 phone: 407-555-0134
                 email: joanna@example.com
-                address: 123 Example Street
-                notes: Class project demo contact
                 created_at: '2026-09-24 14:00:00'
                 updated_at: '2026-09-24 14:00:00'
         '400':
@@ -219,8 +210,6 @@ paths:
                 last_name: Jones
                 phone: 407-555-0134
                 email: joanna@example.com
-                address: 123 Example Street
-                notes: Class project demo contact
                 created_at: '2026-09-24 14:00:00'
                 updated_at: '2026-09-24 14:00:00'
         '400':
@@ -244,12 +233,11 @@ paths:
       - name: id
         in: query
         required: true
-        description: Decimal integer 1–4294967295. No signs, whitespace, leading zeros, fractions, or
-          arrays.
+        description: Decimal integer 1–2147483647. No signs, whitespace, leading zeros, fractions, or arrays.
         type: integer
         format: int64
         minimum: 1
-        maximum: 4294967295
+        maximum: 2147483647
       - in: body
         name: body
         required: true
@@ -283,12 +271,11 @@ paths:
       - name: id
         in: query
         required: true
-        description: Decimal integer 1–4294967295. No signs, whitespace, leading zeros, fractions, or
-          arrays.
+        description: Decimal integer 1–2147483647. No signs, whitespace, leading zeros, fractions, or arrays.
         type: integer
         format: int64
         minimum: 1
-        maximum: 4294967295
+        maximum: 2147483647
       x-session-required: true
       description: Requires an authenticated PHPSESSID session cookie from login.
   /auth/register.php:
@@ -308,7 +295,6 @@ paths:
               user:
                 id: 1
                 username: DemoUser
-                email: demo@example.com
         '400':
           $ref: '#/responses/BadRequest'
         '405':
@@ -392,21 +378,17 @@ definitions:
     required:
     - id
     - username
-    - email
     properties:
       id:
         type: integer
         format: int64
         minimum: 1
-        maximum: 4294967295
+        maximum: 2147483647
+        description: Database users.userID; exposed as id in JSON.
       username:
         type: string
         maxLength: 50
         example: DemoUser
-      email:
-        type: string
-        maxLength: 254
-        example: demo@example.com
   Contact:
     type: object
     required:
@@ -416,8 +398,6 @@ definitions:
     - last_name
     - phone
     - email
-    - address
-    - notes
     - created_at
     - updated_at
     properties:
@@ -425,13 +405,14 @@ definitions:
         type: integer
         format: int64
         minimum: 1
-        maximum: 4294967295
+        maximum: 2147483647
       user_id:
         type: integer
         format: int64
         minimum: 1
-        maximum: 4294967295
-        description: Owner assigned by the authenticated session.
+        maximum: 2147483647
+        description: Database contacts.UserID; assigned by the authenticated session and exposed as user_id
+          in JSON.
       first_name:
         type: string
         maxLength: 50
@@ -446,19 +427,9 @@ definitions:
         example: 407-555-0134
       email:
         type: string
-        maxLength: 254
+        maxLength: 60
         description: Empty string or a valid email address.
         example: joanna@example.com
-      address:
-        type: string
-        maxLength: 255
-        example: 123 Example Street
-      notes:
-        type: string
-        description: Stored MySQL TEXT value, at most 65,535 bytes; null is possible for rows inserted
-          directly into the database.
-        example: Class project demo contact
-        x-nullable: true
       created_at:
         type: string
         pattern: ^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$
@@ -493,18 +464,9 @@ definitions:
         example: 407-555-0134
       email:
         type: string
-        maxLength: 254
+        maxLength: 60
         description: Empty string or a valid email address.
         example: joanna@example.com
-      address:
-        type: string
-        maxLength: 255
-        example: 123 Example Street
-      notes:
-        type: string
-        description: At most 65,535 UTF-8 bytes after trimming; this is a byte limit, not a character
-          limit.
-        example: Class project demo contact
     description: All supplied fields must be strings. Text is trimmed; null bytes are rejected. Omitted
       optional fields become empty strings. Unknown fields are ignored; id, user_id and timestamps cannot
       be set by the caller. Name and VARCHAR limits apply after trimming.
@@ -531,14 +493,15 @@ definitions:
   LoginInput:
     type: object
     required:
-    - email
+    - username
     - password
     properties:
-      email:
+      username:
         type: string
-        format: email
-        maxLength: 254
-        description: Required valid email; trimmed.
+        minLength: 1
+        maxLength: 50
+        description: Required username; trimmed.
+        example: Huey
       password:
         type: string
         format: password
@@ -554,29 +517,24 @@ definitions:
     type: object
     required:
     - username
-    - email
     - password
     properties:
       username:
         type: string
         minLength: 1
         maxLength: 50
-      email:
-        type: string
-        format: email
-        maxLength: 254
       password:
         type: string
         format: password
         minLength: 8
         description: At least 8 Unicode characters and at most 72 UTF-8 bytes. Spaces are preserved; null
           bytes are rejected.
-    description: Username and email are trimmed; field limits apply after trimming. All supplied fields
-      must be strings; null bytes are rejected. Unknown fields are ignored.
+    description: Username is trimmed; field limits apply after trimming. All supplied fields must be strings;
+      null bytes are rejected. Unknown fields are ignored.
   ContactReadResult:
     type: object
-    description: 'Exactly one property is returned: contacts for list/search requests, or contact when
-      id is supplied. Swagger 2.0 cannot enforce this mutually exclusive choice; see the GET response examples
+    description: 'Exactly one property is returned: contacts for list/search requests, or contact when id
+      is supplied. Swagger 2.0 cannot enforce this mutually exclusive choice; see the GET response examples
       for the individual shapes.'
     minProperties: 1
     maxProperties: 1
@@ -610,7 +568,7 @@ responses:
     schema:
       $ref: '#/definitions/Error'
   Conflict:
-    description: Username or email is already in use.
+    description: Username is already in use.
     schema:
       $ref: '#/definitions/Error'
   PayloadTooLarge:

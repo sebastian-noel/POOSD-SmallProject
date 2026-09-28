@@ -15,12 +15,23 @@ require_once __DIR__ . '/validation.php';
 // Every response from this API is JSON.
 header('Content-Type: application/json');
 
-// Sessions are how we know who's logged in. 
+// The Docker preview is bound to loopback and served over HTTP. Some browsers
+// reject Secure cookies there. Apache and all non-preview hosts keep Secure.
+$localHttpPreview = PHP_SAPI === 'cli-server'
+    && getenv('CONTACT_MANAGER_LOCAL_PREVIEW') === '1'
+    && preg_match('/^(localhost|127\.0\.0\.1|\[::1\])(:[0-9]+)?$/iD', $_SERVER['HTTP_HOST'] ?? '') === 1
+    && (!isset($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off');
+if ($localHttpPreview) {
+    // Avoid collisions with HTTPS-only PHPSESSID cookies from other local apps.
+    session_name('POOSD_PREVIEW_SESSION');
+}
+
+// Sessions are how we know who's logged in.
 session_set_cookie_params([
     'lifetime' => 0, // extended per-request in login.php when "remember me" is checked
     'path'     => '/',
     'samesite' => 'Lax',
-    'secure'   => true,
+    'secure'   => !$localHttpPreview,
     'httponly' => true,
 ]);
 session_start();

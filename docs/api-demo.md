@@ -1,157 +1,103 @@
 # SwaggerHub API demonstration
 
+## Deployment status
+
+This revision changes login from email to username and removes user email,
+contact address, and contact notes. `php/Openapi.yaml` is version **2.0.0**.
+The previously published [SwaggerHub 1.0.0 API](https://app.swaggerhub.com/apis/ucf-7ce/personal-contact-manager/1.0.0)
+and earlier successful rehearsals used the old contract. They do not verify this
+revision. The live app is [contacts.snoel.dev](https://contacts.snoel.dev); the
+API base remains `https://contacts.snoel.dev/php`.
+
+Before presenting, complete [the database/application transition](original-erd-transition.md),
+publish the updated specification in SwaggerHub, record its final URL here, and
+rehearse on the deployed HTTPS domain. Local testing is not the class demo.
+
 ## Selected presentation sequence
 
-Demonstrate **POST `/auth/login.php` only in SwaggerHub**, then demonstrate
-partial contact search in the web application. The assignment allows one or two
-API operations in SwaggerHub. The presenter confirmed that login works in
-SwaggerHub and search works in the app. Search in SwaggerHub returned
-401 because the request had no valid authenticated session; resolving that
-session issue is not required for this selected sequence.
+Demonstrate **POST `/auth/login.php` only in SwaggerHub**, then show partial
+contact search in the web application. That is one demonstrated API operation,
+within the assignment's limit of one or two. All eight API operations remain
+documented, but only login has the Presentation tag.
 
-The specification documents all eight operations. Only login is tagged
-**Presentation**; the remaining operations are reference documentation.
+## SwaggerHub preparation
 
-| Item | Status |
-| --- | --- |
-| Application | [contacts.snoel.dev](https://contacts.snoel.dev) |
-| API base URL | `https://contacts.snoel.dev/php` |
-| SwaggerHub API | [personal-contact-manager 1.0.0](https://app.swaggerhub.com/apis/ucf-7ce/personal-contact-manager/1.0.0) |
-| SwaggerHub owner | `ucf-7ce` |
-| Local specification validation | Passed with openapi-spec-validator 0.9.0; eight operations, one presentation operation, no unused definitions |
-| SwaggerHub import | Presenter confirmed the final YAML update is saved; zero issues reported |
-| SwaggerHub login | Presenter reported Login successful and a user object |
-| Application rehearsal | Presenter confirmed add/edit/delete, partial search, and no-match checks completed |
-| Contact isolation between accounts | Presenter confirmed the live two-account privacy check passed |
-| Team sharing and review | Presenter confirmed the SwaggerHub link/script were shared and the documentation reviewed |
-
-## SwaggerHub setup reference
-
-1. Open the shared API URL above. When updating the definition, replace the
-   editor contents with `php/Openapi.yaml`, save, and confirm zero validation
-   issues. Login should remain the only Presentation operation.
+1. Import `php/Openapi.yaml` as the updated 2.0.0 definition. Confirm validation
+   succeeds and login is the only Presentation operation.
 2. Confirm `host: contacts.snoel.dev`, `basePath: /php`, and `schemes: [https]`.
-3. Requests must target the real application, not a mock. If checking integrations,
-   click the API name and open Integrations. API Auto Mocking need not be added;
-   the target must not be `virtserver.swaggerhub.com`.
-4. Check that every presenter can open the shared documentation URL.
-
-[Swagger Studio import instructions](https://support.smartbear.com/swagger/studio/docs/en/manage-apis/import-api-definitions.html)
-and [mock integration settings](https://support.smartbear.com/swagger/studio/docs/en/integrations/api-auto-mocking.html).
-
-## Prepare the demo data
-
-Use dedicated accounts with fake contacts and keep passwords and session values
-out of saved YAML, notes, screenshots, and recordings. Confirm the deployed
-revision and remote database configuration with the infrastructure teammate.
-
-The repository seed provides an example: Huey owns **Jon Doe** and **Joanna
-Jones**; Dewey owns **John Jones**. These are expected fixtures, not independently
-verified live data. If using different accounts, choose equivalent contacts and
-rehearse the expected matches. Do not reapply seed SQL to an existing database.
+   Requests must target the real domain, not a SwaggerHub mock.
+3. Use a dedicated demo account with fake contacts. The fresh seed fixtures use
+   usernames Huey and Dewey. Existing accounts keep their usernames/passwords
+   after copying; do not reapply seed SQL to an existing deployment.
+4. Confirm every presenter can open the updated SwaggerHub URL and the app.
 
 ## 1. Login in SwaggerHub
 
-Expand **Presentation → POST /auth/login.php → Try it out**. Enter the demo
-account's email and password in the JSON body with `rememberMe: false`, then
-execute with Content-Type `application/json`.
+Open **Presentation → POST /auth/login.php → Try it out**. Submit a JSON object:
 
-Expected HTTP 200 body (values depend on the account):
+```json
+{
+  "username": "Huey",
+  "password": "REPLACE_WITH_DEMO_PASSWORD",
+  "rememberMe": false
+}
+```
+
+Expected HTTP 200 body (the ID depends on the account):
 
 ```json
 {
   "message": "Login successful",
-  "user": { "id": 1, "username": "DemoUser", "email": "demo@example.com" }
+  "user": { "id": 1, "username": "Huey" }
 }
 ```
 
-Show the request URL, status code, and returned JSON. Optionally repeat this same
-operation with an incorrect password to show HTTP 401 and
-`{"message":"Invalid email or password"}`. Do not demonstrate additional
-SwaggerHub operations in this selected sequence.
+Point to the real request URL, status code, and JSON result. Optionally repeat
+the same operation with an incorrect password: expect HTTP 401 and
+`{"message":"Invalid username or password"}`. Do not demonstrate additional
+SwaggerHub operations in this sequence.
 
 ## 2. Search in the application
 
-Open [the application](https://contacts.snoel.dev) and log in there separately.
-The login performed in SwaggerHub does not establish the application's browser
-session. Use the contact search box to demonstrate these cases:
+Sign in separately in the app; SwaggerHub login does not establish the app's
+browser session. With the seeded Huey contacts, search `jo` for Jon Doe and
+Joanna Jones, then `oann` to show a substring inside Joanna's name. Search
+`zz-no-match-9382` to show no results. Switching to Dewey and searching `jo`
+returns John Jones instead of Huey's contacts.
 
-| Search | Expected result for Huey's seed contacts |
-| --- | --- |
-| `jo` | Jon Doe and Joanna Jones; exclude Dewey's John Jones |
-| `oann` | Joanna Jones; proves matching inside a name |
-| `zz-no-match-9382` | No contacts found; API returns `{"contacts":[]}` |
-
-To demonstrate privacy, log out and log in as the second account in the app,
-then search for `jo` again. With the seed pattern it should show John Jones,
-without Huey's contacts. Verify this comparison before presenting.
-
-The browser sends each search to PHP. PHP searches first name, last name, email,
-and phone using prepared SQL parameters and filters by the session's user ID.
-The client does not implement search by filtering a cached full contact list.
+Each search sends an AJAX request to PHP. PHP applies prepared SQL parameters
+and filters by the session's user ID. The browser does not perform search by
+filtering a cached complete contact list.
 
 ## Short presentation script
 
-**In SwaggerHub:** “This is our PHP API on our HTTPS domain. Login receives JSON,
-verifies the password, and creates a session. A successful response returns status
-200 with a message and user object. Incorrect credentials return 401.”
+“Our PHP API connects the browser to our remote MySQL database. I worked on
+request validation and integration so the browser receives consistent JSON
+results and errors. Our accounts use usernames and hashed passwords, matching
+the original database design.
 
-**Switch to the app and log in:** “Search sends a new request to PHP, which queries
-our remote MySQL database using prepared parameters. Searching for `oann` matches
-Joanna inside her name. A term with no matches shows an empty result.”
+“Here in SwaggerHub, I am calling our deployed login endpoint with a username
+and password. A successful request returns HTTP 200 and the user's ID and
+username. The password hash is never returned. Login creates a PHP session that
+the server uses to identify the user on later requests.
 
-**Compare accounts:** “Each contact query filters by the user ID in the server
-session. Switching accounts shows that each user has their own private contacts.”
+“In the app, each search sends a new request to the server. Searching `oann`
+matches Joanna even though it is only part of her name. Every contact query is
+restricted to the logged-in user's ID, so another account cannot read, update,
+or delete those contacts. The API also validates field types and lengths, and
+returns an error if the input is invalid.”
 
-## Rehearsal evidence and remaining checks
+## Rehearsal checklist for this revision
 
-| Evidence | Result |
-| --- | --- |
-| Public HTTPS and PHP routes | Verified with curl; details below |
-| SwaggerHub login | Presenter reported success message and user object; numeric status not independently captured |
-| SwaggerHub search attempt | Screenshot shows GET `https://contacts.snoel.dev/php/contacts.php?search=jo`, HTTP 401, `{"message":"Not logged in"}` |
-| Selected sequence | One operation in SwaggerHub, search in app |
-| Application rehearsal | Presenter confirmed add/edit/delete, partial search, and unmatched search checks; response bodies not captured |
-| Two-account privacy comparison | Presenter confirmed completed successfully |
-| Deployed Git revision / remote DB configuration | Confirm with infrastructure teammate |
-| Final timed rehearsal | Team activity scheduled for later |
-| Campus-network checks | Two days and one day before presentation |
-| Slides and submission | Bring slides/support material on USB; each teammate submits slides |
+- [ ] Updated app and copied database deployed together on the HTTPS domain.
+- [ ] SwaggerHub 2.0.0 published; final URL shared with the team.
+- [ ] Username login returns HTTP 200 in SwaggerHub; wrong password returns 401.
+- [ ] Registration, login, logout, and contact CRUD work in the app.
+- [ ] Partial search, no-match results, and two-account isolation demonstrated.
+- [ ] Campus-network checks completed two days and one day before presenting.
+- [ ] Timed full-team rehearsal; slides/support files on USB; every member submits.
 
-## Format and authentication notes
-
-The professor's reference uses Swagger 2.0, so `php/Openapi.yaml` uses `host`,
-`basePath`, `schemes`, body parameters, and `definitions`. The API contract comes
-from `php/README.md`, `php/validation.php`, `php/auth/`, `php/contacts.php`, and
-`database/schema.sql`. Step 5 was merged in repository commit `4517dc6`.
-
-Swagger 2.0 has no native `oneOf`, nullable type, or cookie security scheme.
-`ContactReadResult` describes the exclusive `contacts`/`contact` envelopes with
-examples. Response notes can be null, documented using `x-nullable` and text;
-input notes must be strings. Byte limits are described in text because
-`maxLength` counts characters.
-
-Protected operations require PHPSESSID, documented in descriptions and
-`x-session-required`. This custom extension does not make a client send cookies.
-The cookie uses Secure, HttpOnly, and SameSite=Lax. Keep those settings and the
-ownership checks intact. The failed SwaggerHub search establishes that the
-request lacked a valid session; the specific browser/proxy cause was not verified.
-Session troubleshooting is deferred for the selected one-operation demo.
-
-## Infrastructure check
-
-Check at 2026-09-25 03:43 UTC: curl verified HTTPS without disabling certificate
-validation. The earlier setup page and API 404s were resolved:
-
-| Request | Observed response |
-| --- | --- |
-| GET `/` | Redirects to `/login/index.html`; final HTTP 200, Contact Manager login page |
-| GET `/php/auth/login.php` | HTTP 405, `{"message":"Method not allowed"}`; login requires POST |
-| GET `/php/auth/me.php` | HTTP 401, `{"message":"Not logged in"}` |
-| GET `/php/contacts.php` | HTTP 401, `{"message":"Not logged in"}` |
-
-These unauthenticated checks alone do not verify database connectivity or
-successful login/search; presenter-reported functional results are recorded above.
-An earlier Python urllib check was blocked with Cloudflare 403/error 1010 while
-curl reached the server. If a presenter encounters that block, inspect Cloudflare
-Security Events for the failing request before changing settings.
+Protected routes require PHPSESSID. Keep Secure, HttpOnly, SameSite=Lax, and the
+ownership checks intact. The old SwaggerHub search attempt returned 401 without
+a valid session; this one-operation presentation sequence does not depend on
+cross-site authenticated search working in SwaggerHub.

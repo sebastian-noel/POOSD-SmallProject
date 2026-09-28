@@ -29,9 +29,11 @@ trap 'exit 143' TERM
     -e MYSQL_USER=contact_test -e MYSQL_PASSWORD=disposable-test-password \
     mysql:8.4 >/dev/null
 
-# Only mount PHP files: a real repository .env must never override test settings.
+# Mount app directories individually: the repo's .env must never override tests.
 "$docker_bin" run -d --name "$php_name" --network "$test_name" \
     -p 127.0.0.1::8080 -v "$repo_dir/php:/app/php:ro" \
+    -v "$repo_dir/login:/app/login:ro" -v "$repo_dir/signup:/app/signup:ro" \
+    -v "$repo_dir/contacts:/app/contacts:ro" -v "$repo_dir/index.php:/app/index.php:ro" \
     -e DB_HOST="$db_name" -e DB_NAME=contact_manager \
     -e DB_USER=contact_test -e DB_PASSWORD=disposable-test-password \
     php:8.3-cli sh -c 'docker-php-ext-install pdo_mysql >/tmp/php-build.log 2>&1 && php -S 0.0.0.0:8080 -t /app' >/dev/null
@@ -52,10 +54,13 @@ if [ "$ready" != true ]; then
     exit 1
 fi
 
-for sql_file in "$repo_dir/database/schema.sql" "$repo_dir/tests/fixtures/api-errors.sql"; do
+for sql_file in "$repo_dir/database/schema.sql" "$repo_dir/database/seed.sql" "$repo_dir/tests/fixtures/api-errors.sql"; do
     "$docker_bin" exec -i -e MYSQL_PWD=disposable-test-root "$db_name" \
         mysql -uroot contact_manager < "$sql_file"
 done
 "$docker_bin" exec "$php_name" sh -c 'for file in /app/php/*.php /app/php/auth/*.php; do php -l "$file" || exit 1; done'
 port="$("$docker_bin" port "$php_name" 8080/tcp | sed 's/.*://')"
 API_TEST_BASE_URL="http://127.0.0.1:$port" node "$repo_dir/tests/api-validation.mjs"
+if [ "${API_TEST_BROWSER:-0}" = 1 ]; then
+    API_TEST_BASE_URL="http://127.0.0.1:$port" node "$repo_dir/tests/browser-flow.cjs"
+fi

@@ -11,7 +11,7 @@ if (empty($_SESSION['user_id'])) {
 }
 
 $db = get_db();
-$stmt = $db->prepare('SELECT id, username, email FROM users WHERE id = ?');
+$stmt = $db->prepare('SELECT userID AS id, username FROM users WHERE userID = ?');
 $stmt->execute([$_SESSION['user_id']]);
 $user = $stmt->fetch();
 
@@ -22,5 +22,4 @@ if (!$user) {
 json_response(200, ['user' => [
     'id'       => (int) $user['id'],
     'username' => $user['username'],
-    'email'    => $user['email'],
 ]]);

@@ -18,7 +18,7 @@ Expected request body:
 
 ```json
 {
-  "email": "user@example.com",
+  "username": "Huey",
   "password": "yourPassword123",
   "rememberMe": true
 }
@@ -29,7 +29,7 @@ Expected successful response shape:
 ```json
 {
   "message": "Login successful",
-  "user": { "id": 1, "username": "Huey", "email": "huey@example.com" }
+  "user": { "id": 1, "username": "Huey" }
 }
 ```
 

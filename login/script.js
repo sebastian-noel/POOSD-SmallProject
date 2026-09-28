@@ -42,12 +42,12 @@ async function loginUser(payload) {
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
 
-  const email = document.getElementById('email').value.trim();
+  const username = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value;
   const rememberMe = document.getElementById('rememberMe').checked;
 
-  if (!email || !password) {
-    setMessage('Please enter both your email and password.', 'error');
+  if (!username || !password) {
+    setMessage('Please enter both your username and password.', 'error');
     return;
   }
 
@@ -55,7 +55,7 @@ form.addEventListener('submit', async (event) => {
   setMessage('');
 
   try {
-    const result = await loginUser({ email, password, rememberMe });
+    const result = await loginUser({ username, password, rememberMe });
     setMessage(result.message || 'Login successful. Redirecting...', 'success');
 
     window.location.replace('../contacts/contacts.html');

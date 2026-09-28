@@ -43,11 +43,10 @@ form.addEventListener('submit', async (event) => {
   event.preventDefault();
 
   const username = document.getElementById('username').value.trim();
-  const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
 
-  if (!username || !email || !password) {
-    setMessage('Please fill in username, email, and password.', 'error');
+  if (!username || !password) {
+    setMessage('Please fill in username and password.', 'error');
     return;
   }
 
@@ -60,7 +59,7 @@ form.addEventListener('submit', async (event) => {
   setMessage('');
 
   try {
-    const result = await registerUser({ username, email, password });
+    const result = await registerUser({ username, password });
     setMessage(result.message || 'Account created. Redirecting to login...', 'success');
 
     window.setTimeout(() => {
