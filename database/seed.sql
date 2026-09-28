@@ -1,12 +1,13 @@
 -- Optional fixtures for a fresh test database. Run once after schema.sql.
--- All demo accounts use ContactDemo123!; these are PHP-generated bcrypt hashes.
+-- Generate with scripts/seed-demo.php, which sets @demo_password_hash at runtime.
+-- Importing without that variable fails the NOT NULL constraint; no default login.
 -- Account uniqueness rejects a second import without overwriting existing users.
 START TRANSACTION;
 
 INSERT INTO users (username, password_hash) VALUES
-    ('Huey', '$2y$10$K/2yH8YU8dRQWYBHzfP8gek/Ei5ropkoNyo/pXIq.x682aWXa8BvG'),
-    ('Dewey', '$2y$10$qd0IZMAffaIYHhKQWhbM0O/SbKJD2wAu0i5O7ssc1raJXKjBW5d06'),
-    ('Louie', '$2y$10$KaImnZOFCRLRomN5fy6itOlZvdBN8Y7EPFhlDpRwg9cgl9JQfOQem');
+    ('Huey', @demo_password_hash),
+    ('Dewey', @demo_password_hash),
+    ('Louie', @demo_password_hash);
 
 SET @huey_id = (SELECT userID FROM users WHERE username = 'Huey');
 SET @dewey_id = (SELECT userID FROM users WHERE username = 'Dewey');

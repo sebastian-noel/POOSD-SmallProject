@@ -1,4 +1,5 @@
 const assert = require('node:assert/strict');
+const { randomBytes } = require('node:crypto');
 const { chromium } = require('playwright');
 
 // Optional real-browser checks against the disposable server from the runner.
@@ -9,6 +10,7 @@ if (!base || !/^http:\/\/127\.0\.0\.1:\d+$/.test(base)) {
 }
 
 (async () => {
+    const password = randomBytes(24).toString('hex');
     const browser = await chromium.launch({ headless: true, channel: process.env.PLAYWRIGHT_CHANNEL || undefined });
     try {
         const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
@@ -22,11 +24,11 @@ if (!base || !/^http:\/\/127\.0\.0\.1:\d+$/.test(base)) {
         await page.goto(base + '/signup/index.html');
         assert.equal(await page.locator('#email').count(), 0);
         await page.locator('#username').fill('BrowserOwner');
-        await page.locator('#password').fill('BrowserPassword123!');
+        await page.locator('#password').fill(password);
         await page.locator('#submitButton').click();
         await page.waitForURL('**/login/index.html');
         await page.locator('#username').fill('BrowserOwner');
-        await page.locator('#password').fill('BrowserPassword123!');
+        await page.locator('#password').fill(password);
         await page.locator('#submitButton').click();
         await page.waitForURL('**/contacts/contacts.html');
         await page.locator('#contactsPanel').waitFor({ state: 'visible' });

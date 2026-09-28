@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { randomBytes } from 'node:crypto';
 
 // Run through run-api-validation.sh: this suite creates test users and requires
 // the error-injection triggers in a fresh, disposable database.
@@ -40,11 +41,12 @@ async function expect(status, promise, label) {
 const guest = client();
 const owner = client();
 const other = client();
-const registration = { username: 'ValidationOwner', password: 'TestPassword123!' };
+const registration = { username: 'ValidationOwner', password: randomBytes(24).toString('hex') };
 const contact = { first_name: ' Ada ', last_name: ' Lovelace ', phone: '', email: '' };
 
 const seeded = client();
-await expect(200, seeded('POST', 'auth/login.php', { username: 'Huey', password: 'ContactDemo123!' }), 'existing seeded password hash works with username login');
+assert.ok(process.env.API_TEST_SEED_PASSWORD, 'runner must supply the generated seed password');
+await expect(200, seeded('POST', 'auth/login.php', { username: 'Huey', password: process.env.API_TEST_SEED_PASSWORD }), 'generated seeded password hash works with username login');
 const seededSearch = await expect(200, seeded('GET', 'contacts.php?search=jo'), 'seeded partial search after schema change');
 assert.deepEqual(seededSearch.data.contacts.map(row => row.first_name), ['Jon', 'Joanna']);
 

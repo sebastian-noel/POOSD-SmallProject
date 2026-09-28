@@ -233,10 +233,13 @@ mysql \
   contact_manager < database/schema.sql
 ```
 
-Load the test data:
+For a fresh demo database only, generate the test data with a privately chosen
+password (the seed file has no built-in login):
 
 ```bash
-mysql \
+read -r -s -p 'Demo password: ' demo_password
+printf '\n'
+printf '%s' "$demo_password" | php scripts/seed-demo.php | mysql \
   -h RDS_ENDPOINT \
   -P 3306 \
   -u dbadmin \
@@ -244,7 +247,8 @@ mysql \
   --ssl \
   --ssl-ca="$HOME/global-bundle.pem" \
   --ssl-verify-server-cert \
-  contact_manager < database/seed.sql
+  contact_manager
+unset demo_password
 ```
 
 Run verification:

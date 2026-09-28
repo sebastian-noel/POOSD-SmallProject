@@ -6,8 +6,9 @@ address, and notes are not stored in this schema.
 
 ## Setup
 
-For a fresh MySQL 8.4 database, run `schema.sql`, optionally `seed.sql`, then
-`verification.sql`. Seed data is for an empty disposable/demo database only.
+For a fresh MySQL 8.4 database, run `schema.sql`, optionally generate and import
+seed data as described below, then run `verification.sql`.
+Seed data is for an empty disposable/demo database only.
 The scripts do not update an existing schema or erase old data.
 
 For an existing deployment, follow [the transition handoff](../docs/original-erd-transition.md).
@@ -47,9 +48,26 @@ ordering; it does not turn a substring LIKE query into an indexed prefix search.
 
 ## Demo accounts
 
-All accounts use the public test password `ContactDemo123!`; seed data contains
-PHP-generated bcrypt hashes. Do not load these public credentials into a database
-with real personal data.
+The current seed files contain no fixed demo password or usable precomputed hash. For local
+testing, `bash scripts/preview.sh` generates a password and stores it in the
+Git-ignored, owner-readable `.env.preview-password` file. API tests generate a
+new password on every run and discard their entire database afterward.
+
+For a separate demo database, supply a password privately to the CLI generator:
+
+```bash
+read -r -s -p 'Demo password: ' demo_password
+printf '\n'
+printf '%s' "$demo_password" | php scripts/seed-demo.php | mysql -u USER -p DATABASE
+unset demo_password
+```
+
+The generator reads the password from stdin and emits only SQL with a bcrypt
+hash. `seed.sql` expects `@demo_password_hash` in the same MySQL session and fails
+if it is unset; do not import it directly or use `mysql --force`. Never load demo
+data into a database containing real personal data. If you previously deployed
+the old public demo login, change those demo passwords on that deployment too;
+this local change cannot revoke credentials on another server.
 
 | Login username | Contacts |
 | --- | --- |

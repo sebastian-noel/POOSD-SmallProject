@@ -54,10 +54,15 @@ if [ "$ready" != true ]; then
     exit 1
 fi
 
-for sql_file in "$repo_dir/database/schema.sql" "$repo_dir/database/seed.sql" "$repo_dir/tests/fixtures/api-errors.sql"; do
+for sql_file in "$repo_dir/database/schema.sql" "$repo_dir/tests/fixtures/api-errors.sql"; do
     "$docker_bin" exec -i -e MYSQL_PWD=disposable-test-root "$db_name" \
         mysql -uroot contact_manager < "$sql_file"
 done
+export API_TEST_SEED_PASSWORD="$(node -e "process.stdout.write(require('node:crypto').randomBytes(24).toString('hex'))")"
+printf '%s' "$API_TEST_SEED_PASSWORD" | "$docker_bin" run --rm -i \
+    -v "$repo_dir/scripts:/seed/scripts:ro" -v "$repo_dir/database:/seed/database:ro" \
+    php:8.3-cli php /seed/scripts/seed-demo.php | \
+    "$docker_bin" exec -i -e MYSQL_PWD=disposable-test-root "$db_name" mysql -uroot contact_manager
 "$docker_bin" exec "$php_name" sh -c 'for file in /app/php/*.php /app/php/auth/*.php; do php -l "$file" || exit 1; done'
 port="$("$docker_bin" port "$php_name" 8080/tcp | sed 's/.*://')"
 API_TEST_BASE_URL="http://127.0.0.1:$port" node "$repo_dir/tests/api-validation.mjs"

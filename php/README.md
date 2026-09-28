@@ -73,6 +73,9 @@ directories are mounted individually, so a real `.env` cannot redirect tests to
 another database. The containers and
 network are removed on exit. No application server or production database is
 needed. The first run may download images and compile the PDO MySQL extension.
+Seeded logins and valid test-user passwords are generated at runtime; no shared
+demo password is required. The runner passes the generated seed credential to
+the API test through `API_TEST_SEED_PASSWORD`.
 
 Tests cover field types and limits, malformed requests, method/status headers,
 partial search, contact ownership, failed updates, and generic database errors.
@@ -81,6 +84,8 @@ does not simulate the timing of two concurrent registrations.
 
 Run `node --test tests/contact-save.test.cjs` for contact form regressions and
 `bash tests/run-schema-migration.sh` for the non-destructive database-copy tests.
+Run `node tests/seed-demo.cjs` with Docker available to check seed-password
+validation, fresh bcrypt salts, and the limited preview password update.
 With Playwright installed and Chromium available, set `API_TEST_BROWSER=1` when
 running the API runner to include the real-browser signup/login/CRUD/search/logout
 flow. `PLAYWRIGHT_CHANNEL=chrome` uses an installed Chrome instead of Playwright's
@@ -105,3 +110,8 @@ Secure. HttpOnly and SameSite=Lax remain enabled. This permits browsers that
 reject Secure cookies on plain HTTP loopback to retain the login session.
 Default deployments, Apache, HTTPS, and non-loopback hosts keep Secure PHPSESSID
 cookies. Remember-me and logout use the same cookie settings as session creation.
+
+After starting the preview, run
+`PREVIEW_TEST_BASE_URL=http://127.0.0.1:PORT node tests/preview-session.mjs`
+with its printed port. The check reads `.env.preview-password` locally (or
+`PREVIEW_TEST_PASSWORD` if supplied) and does not print the credential.

@@ -44,7 +44,10 @@ bash scripts/preview.sh
 ```
 
 Open the loopback URL printed by the script. Sign in as `Huey`, `Dewey`, or
-`Louie` with `ContactDemo123!`, or create a local test account. This preview uses
+`Louie` with the generated password in `.env.preview-password`, or create a local
+test account. That file is ignored by Git and readable only by its owner. On the
+first upgrade, the script replaces the three sample accounts' old shared password
+without changing their contacts or accounts you registered yourself. This preview uses
 its own MySQL container and never loads the repository's server `.env`. Local
 test data persists between stops. Live source files are mounted read-only into
 PHP, so edits appear after refreshing the page.

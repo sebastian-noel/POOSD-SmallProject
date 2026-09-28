@@ -17,6 +17,7 @@ fi
 preview_name=poosd-original-erd-preview
 db_name="$preview_name-db"
 php_name="$preview_name-php"
+password_file="$repo_dir/.env.preview-password"
 exists() { "$docker_bin" container inspect "$1" >/dev/null 2>&1; }
 running() { [ "$("$docker_bin" inspect -f '{{.State.Running}}' "$1" 2>/dev/null)" = true ]; }
 sql() {
@@ -28,7 +29,7 @@ show_url() {
     port="$("$docker_bin" port "$php_name" 8080/tcp | sed 's/.*://')"
     echo "Preview: http://127.0.0.1:$port"
     echo 'Demo username: Huey (or Dewey / Louie)'
-    echo 'Demo password: ContactDemo123!'
+    echo "Demo password is stored locally in: $password_file"
     echo 'Test data is local; it is retained when the preview is stopped.'
 }
 
@@ -71,7 +72,6 @@ if [ "$ready" != true ]; then echo 'Local MySQL did not become ready.' >&2; exit
 table_count="$(sql -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='contact_manager';")"
 if [ "$table_count" = 0 ]; then
     sql < "$repo_dir/database/schema.sql"
-    sql < "$repo_dir/database/seed.sql"
 else
     # Refuse incompatible preview data instead of modifying or deleting it.
     columns="$(sql -e "SELECT CONCAT(table_name, ':', GROUP_CONCAT(column_name ORDER BY ordinal_position)) FROM information_schema.columns WHERE table_schema='contact_manager' GROUP BY table_name ORDER BY table_name;")"
@@ -81,6 +81,29 @@ else
         exit 1
     fi
 fi
+
+# Keep the generated demo credential out of Git and out of routine command output.
+# On first upgrade, replace only the three preview sample accounts' old password.
+# Contacts and independently registered accounts are left intact.
+new_password=false
+if [ -f "$password_file" ]; then
+    demo_password="$(cat "$password_file")"
+else
+    demo_password="$(openssl rand -hex 24)"
+    new_password=true
+fi
+if [ "$table_count" = 0 ] || [ "$new_password" = true ]; then
+    seed_mode=''
+    if [ "$table_count" != 0 ]; then seed_mode=--rotate-password; fi
+    printf '%s' "$demo_password" | "$docker_bin" run --rm -i \
+        -v "$repo_dir/scripts:/seed/scripts:ro" -v "$repo_dir/database:/seed/database:ro" \
+        php:8.3-cli php /seed/scripts/seed-demo.php "$seed_mode" | sql
+    if [ "$new_password" = true ]; then
+        (umask 077; printf '%s' "$demo_password" > "$password_file")
+    fi
+fi
+chmod 600 "$password_file"
+unset demo_password
 
 # Upgrade the app container's preview environment while retaining its port and
 # the separate database volume. No contacts/accounts are removed.

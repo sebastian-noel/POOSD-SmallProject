@@ -1,13 +1,17 @@
 import assert from 'node:assert/strict';
 import { get } from 'node:http';
+import { readFileSync } from 'node:fs';
 
 // Check only the isolated local preview; never accept a production URL.
 const base = process.env.PREVIEW_TEST_BASE_URL;
 assert.match(base ?? '', /^http:\/\/127\.0\.0\.1:\d+$/);
+const password = process.env.PREVIEW_TEST_PASSWORD
+    ?? readFileSync(new URL('../.env.preview-password', import.meta.url), 'utf8').trim();
+assert.ok(password, 'start scripts/preview.sh to generate the local demo credential');
 for (const rememberMe of [false, true]) {
     const login = await fetch(base + '/php/auth/login.php', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: 'Huey', password: 'ContactDemo123!', rememberMe }),
+        body: JSON.stringify({ username: 'Huey', password, rememberMe }),
     });
     assert.equal(login.status, 200);
     const cookie = login.headers.getSetCookie().findLast(value => value.startsWith('POOSD_PREVIEW_SESSION='));
