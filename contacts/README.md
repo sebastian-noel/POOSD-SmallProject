@@ -78,8 +78,12 @@ Anything that goes wrong (400 / 404 / 405):
 
 ## Saving contacts
 
-Add and edit use the same save flow. First and last name must contain text;
-email and phone are optional. If an email is supplied, the form checks its format.
+Add uses `addContact()` (POST); edit uses `updateContact(id)` (PUT).
+The form submits through these separate handlers, matching the original frontend
+structure. Both handlers keep the save-recovery behavior described below.
+
+First and last name must contain text; email and phone are optional. If an email
+is supplied, the form checks its format.
 Input length limits match the database columns. These browser checks do not
 replace validation in the API.
 

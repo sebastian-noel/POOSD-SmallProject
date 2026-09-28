@@ -12,7 +12,8 @@ function fixture() {
     function element(tagName = 'div') {
         return {
             tagName, value: '', textContent: '', disabled: false,
-            style: {}, dataset: {}, attributes: {}, children: [],
+            style: {}, dataset: {}, attributes: {}, children: [], listeners: {},
+            addEventListener(name, listener) { this.listeners[name] = listener; },
             set innerHTML(value) { throw new Error('Use textContent for contact data'); },
             setAttribute(name, value) { this.attributes[name] = value; },
             append(...children) { this.children.push(...children); },
@@ -23,7 +24,8 @@ function fixture() {
     }
     const fields = ['firstName', 'lastName', 'contactEmail', 'contactPhone', 'contactAddress', 'notes'];
     const ids = [...fields, 'contactForm', 'contactAddResult', 'saveContactBtn',
-        'closePopupBtn', 'popupOverlay', 'popupTitle', 'contactSearchResult', 'addContactBtn', 'contactsTableBody'];
+        'closePopupBtn', 'popupOverlay', 'popupTitle', 'contactSearchResult', 'addContactBtn', 'contactsTableBody',
+        'searchBox', 'logoutBtn'];
     const elements = Object.fromEntries(ids.map(id => [id, element()]));
     const form = elements.contactForm;
     form.elements = [...fields.map(id => elements[id]), elements.closePopupBtn, elements.saveContactBtn];
@@ -45,17 +47,18 @@ function fixture() {
             this.onload();
         }
     }
+    const documentListeners = {};
     const context = vm.createContext({
         window: { addEventListener() {} },
         document: {
             getElementById: id => elements[id],
             createElement: tag => element(tag),
-            addEventListener() {},
+            addEventListener(name, listener) { documentListeners[name] = listener; },
         },
         XMLHttpRequest: Request,
     });
     vm.runInContext(source, context);
-    return { context, elements, fields, form, requests, Request };
+    return { context, elements, fields, form, requests, Request, documentListeners };
 }
 
 function assertPreserved(f) {
@@ -71,19 +74,19 @@ function assertPreserved(f) {
 test('invalid fields and whitespace-only names do not submit', () => {
     const f = fixture();
     f.form.reportValidity = () => false;
-    f.context.saveContact(null);
+    f.context.addContact();
     assert.equal(f.requests.length, 0);
     f.form.reportValidity = () => true;
     f.elements.firstName.value = '   ';
-    f.context.saveContact(null);
+    f.context.addContact();
     assert.equal(f.requests.length, 0);
     assert.match(f.elements.contactAddResult.textContent, /required/);
 });
 
 test('pending saves disable controls and duplicate submissions; success resets and refreshes', () => {
     const f = fixture();
-    f.context.saveContact(null);
-    f.context.saveContact(null);
+    f.context.addContact();
+    f.context.addContact();
     assert.equal(f.requests.length, 1);
     assert.ok(f.form.elements.every(control => control.disabled));
     assert.equal(f.form.attributes['aria-busy'], 'true');
@@ -112,45 +115,64 @@ const failures = [
     ['validation error', r => r.respond(400, { message: 'Invalid email address' })],
     ['expired session', r => r.respond(401, { message: 'Not logged in' })],
     ['server failure', r => r.respond(500, { message: 'Unavailable' })],
-    ['HTML response', r => r.respond(201, '<html>Error</html>')],
-    ['missing confirmation', r => r.respond(201, { message: 'Created' })],
-    ['unexpected success status', r => r.respond(200, { contact: { id: 6 } })],
+    ['HTML response', (r, status) => r.respond(status, '<html>Error</html>')],
+    ['missing confirmation', (r, status) => r.respond(status, { message: 'Saved' })],
+    ['unexpected success status', (r, status) => r.respond(status === 201 ? 200 : 201, { contact: { id: 6 } })],
     ['network error', r => r.onerror()],
     ['timeout', r => r.ontimeout()],
     ['abort', r => r.onabort()],
 ];
-for (const [name, fail] of failures) {
-    test(`${name} preserves entries and permits retry`, () => {
+for (const operation of [
+    { name: 'add', save: f => f.context.addContact(), status: 201 },
+    { name: 'update', save: f => f.context.updateContact(42), status: 200 },
+]) {
+  for (const [name, fail] of failures) {
+    test(`${operation.name}: ${name} preserves entries and permits retry`, () => {
         const f = fixture();
-        f.context.saveContact(null);
-        fail(f.requests[0]);
+        operation.save(f);
+        fail(f.requests[0], operation.status);
         assertPreserved(f);
         assert.equal(f.requests.length, 1); // A failure must not reload the list.
-        f.context.saveContact(null);
+        operation.save(f);
         assert.equal(f.requests.length, 2);
         assert.equal(f.requests[1].body, f.requests[0].body);
-        f.requests[1].respond(201, { contact: { id: 6 } });
+        f.requests[1].respond(operation.status, { contact: { id: 42 } });
         assert.equal(f.elements.popupOverlay.style.display, 'none');
     });
+  }
 }
+
+test('form submission creates with POST and edits the selected contact with PUT', async () => {
+    const f = fixture();
+    f.context.checkSession = async () => false;
+    await f.documentListeners.DOMContentLoaded();
+    const event = { preventDefault() {} };
+    f.form.listeners.submit(event);
+    assert.equal(f.requests[0].method, 'POST');
+    f.requests[0].respond(201, { contact: { id: 42 } });
+    f.context.editContact({ id: 42, first_name: 'Jane', last_name: 'Doe' });
+    f.form.listeners.submit(event);
+    assert.equal(f.requests[2].method, 'PUT');
+    assert.equal(f.requests[2].url, '../php/contacts.php?id=42');
+});
 
 test('a synchronous send failure restores the form', () => {
     const f = fixture();
     f.Request.prototype.failSend = true;
-    f.context.saveContact(null);
+    f.context.addContact();
     assertPreserved(f);
 });
 
 test('failed edits keep the selected contact for a PUT retry', () => {
     const f = fixture();
     f.context.editContact({ id: 42, first_name: ' Jane ', last_name: ' Doe ', notes: 'Keep these notes' });
-    vm.runInContext('saveContact(editContactId);', f.context);
+    vm.runInContext('updateContact(editContactId);', f.context);
     f.context.editContact({ id: 99, first_name: 'Another', last_name: 'Contact' });
     assert.equal(f.elements.firstName.value, ' Jane '); // Cannot switch contacts mid-save.
     f.requests[0].respond(400, { message: 'Please correct the email' });
     assertPreserved(f);
     f.elements.contactEmail.value = 'jane@example.com';
-    vm.runInContext('saveContact(editContactId);', f.context);
+    vm.runInContext('updateContact(editContactId);', f.context);
     assert.equal(f.requests[1].method, 'PUT');
     assert.equal(f.requests[1].url, '../php/contacts.php?id=42');
     assert.equal(JSON.parse(f.requests[1].body).email, 'jane@example.com');

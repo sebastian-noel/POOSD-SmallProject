@@ -82,7 +82,7 @@ function setContactSaving(saving)
 	document.getElementById('saveContactBtn').textContent = saving ? 'Saving...' : 'Save Contact';
 }
 
-function saveContact(id)
+function addContact()
 {
 	if (isSavingContact) return;
 	const form = document.getElementById('contactForm');
@@ -117,7 +117,7 @@ function saveContact(id)
 			fail('Unexpected response from the server. Your entries have been kept.');
 			return;
 		}
-		if (xhr.status !== (id === null ? 201 : 200))
+		if (xhr.status !== 201)
 		{
 			fail(typeof data?.message === 'string' ? data.message : 'Unable to save this contact. Please try again.');
 			return;
@@ -133,7 +133,7 @@ function saveContact(id)
 		form.reset();
 		document.getElementById('popupOverlay').style.display = 'none';
 		const message = document.getElementById('contactSearchResult');
-		message.textContent = id === null ? 'Contact has been added.' : 'Contact has been updated.';
+		message.textContent = 'Contact has been added.';
 		message.className = 'contact-message success';
 		createContacts();
 		document.getElementById('addContactBtn').focus();
@@ -143,7 +143,7 @@ function saveContact(id)
 	xhr.onabort = () => fail('The save request was interrupted. Your entries have been kept.');
 	try
 	{
-		xhr.open(id === null ? 'POST' : 'PUT', id === null ? API_URL : API_URL + '?id=' + encodeURIComponent(id), true);
+		xhr.open('POST', API_URL, true);
 		xhr.withCredentials = true;
 		xhr.timeout = 15000;
 		xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
@@ -278,6 +278,80 @@ function editContact(contact)
 	document.getElementById("popupOverlay").style.display = "grid";
 }
 
+function updateContact(id)
+{
+	if (isSavingContact) return;
+	const form = document.getElementById('contactForm');
+	setContactSaveMessage('');
+	if (!form.reportValidity()) return;
+	const contact = {
+		first_name: document.getElementById('firstName').value.trim(),
+		last_name: document.getElementById('lastName').value.trim(),
+		phone: document.getElementById('contactPhone').value.trim(),
+		email: document.getElementById('contactEmail').value.trim(),
+		address: document.getElementById('contactAddress').value.trim(),
+		notes: document.getElementById('notes').value.trim(),
+	};
+	if (!contact.first_name || !contact.last_name)
+	{
+		setContactSaveMessage('First and last name are required.');
+		return;
+	}
+
+	setContactSaving(true);
+	const fail = message => {
+		setContactSaving(false);
+		setContactSaveMessage(message);
+	};
+	const xhr = new XMLHttpRequest();
+	xhr.onload = function()
+	{
+		let data;
+		try { data = JSON.parse(xhr.responseText); }
+		catch
+		{
+			fail('Unexpected response from the server. Your entries have been kept.');
+			return;
+		}
+		if (xhr.status !== 200)
+		{
+			fail(typeof data?.message === 'string' ? data.message : 'Unable to save this contact. Please try again.');
+			return;
+		}
+		if (!data?.contact?.id)
+		{
+			fail('The server did not confirm the saved contact. Your entries have been kept.');
+			return;
+		}
+
+		setContactSaving(false);
+		editContactId = null;
+		form.reset();
+		document.getElementById('popupOverlay').style.display = 'none';
+		const message = document.getElementById('contactSearchResult');
+		message.textContent = 'Contact has been updated.';
+		message.className = 'contact-message success';
+		createContacts();
+		document.getElementById('addContactBtn').focus();
+	};
+	xhr.onerror = () => fail('Unable to reach the server. Your entries have been kept.');
+	xhr.ontimeout = () => fail('The save request timed out. Your entries have been kept.');
+	xhr.onabort = () => fail('The save request was interrupted. Your entries have been kept.');
+	try
+	{
+		xhr.open('PUT', API_URL + '?id=' + encodeURIComponent(id), true);
+		xhr.withCredentials = true;
+		xhr.timeout = 15000;
+		xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+		xhr.send(JSON.stringify(contact));
+	}
+	catch
+	{
+		fail('Unable to send this contact. Your entries have been kept.');
+	}
+}
+
+
 function fetchContactForEdit(id)
 {
 	let xhr = new XMLHttpRequest();
@@ -339,7 +413,14 @@ document.addEventListener("DOMContentLoaded", async function ()
 	form.addEventListener("submit", function(event)
 	{
 		event.preventDefault();
-		saveContact(editContactId);
+		if (editContactId)
+		{
+			updateContact(editContactId);
+		}
+		else
+		{
+			addContact();
+		}
 	});
  
 	searchBox.addEventListener("keydown", function(event)
