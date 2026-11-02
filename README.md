@@ -21,8 +21,21 @@ The application uses a LAMP-compatible AWS deployment:
 Browser -> EC2 (Amazon Linux, Apache, PHP API) -> RDS for MySQL
 ```
 
-Copy `.env.example` to an ignored `.env` file when configuring the backend.
-Never commit database passwords, AWS credentials, or EC2 private keys.
+## AI Assistance Disclosure
 
-See [the AWS setup and database handoff](docs/aws-setup.md) for the current
-infrastructure status and database integration steps.
+This project was developed with assistance from generative AI tools:
+
+- **Tools**: OpenAI Codex (Sol and Astra) and Anthropic Claude (Opus and Sonnet).
+
+- **Dates**: September 17-28, 2026 for project development
+- **Scope**: General assistance throughout all aspects of the project, including
+  the frontend, PHP APIs, MySQL database, deployment and configuration, testing,
+  and documentation.
+- **Nature of use**: Asking questions and learning unfamiliar concepts;
+  understanding existing code; generating, debugging, and refining code; and
+  creating and using handoff files to share context and collaborate as a group.
+
+All AI-assisted code and suggestions incorporated into the project were reviewed,
+verified, and tested by group members. The group takes responsibility for the
+final implementation, which reflects our understanding of the concepts and
+assignment requirements.
